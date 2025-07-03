@@ -8,13 +8,18 @@ import { SearchResults } from "@/components/SearchResults";
 import { FavoriteVerses } from "@/components/FavoriteVerses";
 import { ReadingPlans } from "@/components/ReadingPlans";
 import { OptionsMenu } from "@/components/OptionsMenu";
+import { DailyVerse } from "@/components/DailyVerse";
+import { VerseExplanation } from "@/components/VerseExplanation";
+import { BibleVersionSelector } from "@/components/BibleVersionSelector";
 
 const Index = () => {
-  const [currentView, setCurrentView] = useState<'home' | 'books' | 'chapter' | 'search' | 'plans' | 'options'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'books' | 'chapter' | 'search' | 'plans' | 'options' | 'explanation' | 'versions'>('home');
   const [selectedBook, setSelectedBook] = useState<string>('');
   const [selectedChapter, setSelectedChapter] = useState<number>(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [currentVerseForExplanation, setCurrentVerseForExplanation] = useState<any>(null);
+  const [selectedBibleVersion, setSelectedBibleVersion] = useState<string>('RVR1960');
 
   const handleBookSelect = (bookName: string) => {
     setSelectedBook(bookName);
@@ -26,6 +31,21 @@ const Index = () => {
     setSearchQuery(query);
     setSearchResults([]);
     setCurrentView('search');
+  };
+
+  const handleExplainVerse = (verse: any) => {
+    setCurrentVerseForExplanation(verse);
+    setCurrentView('explanation');
+  };
+
+  const handleNavigateToVerse = (reference: string) => {
+    // Lógica para navegar a un versículo específico
+    // Por ahora, volvemos a home
+    setCurrentView('home');
+  };
+
+  const handleVersionChange = (version: string) => {
+    setSelectedBibleVersion(version);
   };
 
   const navigationItems = [
@@ -65,16 +85,28 @@ const Index = () => {
         return <ReadingPlans />;
       case 'options':
         return <OptionsMenu />;
+      case 'explanation':
+        return (
+          <VerseExplanation 
+            verse={currentVerseForExplanation}
+            onBack={() => setCurrentView('home')}
+            onNavigateToVerse={handleNavigateToVerse}
+          />
+        );
+      case 'versions':
+        return (
+          <BibleVersionSelector 
+            selectedVersion={selectedBibleVersion}
+            onVersionChange={handleVersionChange}
+          />
+        );
       default:
         return (
           <div className="p-4">
-            <div className="text-center py-8">
-              <Book className="h-16 w-16 mx-auto mb-4 text-primary" />
-              <h2 className="text-2xl font-bold mb-4 text-foreground">Bienvenido a Mi Alma Biblia</h2>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                Explora la Palabra de Dios con esta aplicación moderna diseñada para tu crecimiento espiritual.
-              </p>
-            </div>
+            <DailyVerse 
+              onExplainVerse={handleExplainVerse}
+              selectedVersion={selectedBibleVersion}
+            />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
               <div className="bg-card p-6 rounded-lg border shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => setCurrentView('books')}>
@@ -95,10 +127,10 @@ const Index = () => {
                 <p className="text-muted-foreground text-sm">Encuentra versículos específicos usando palabras clave o referencias.</p>
               </div>
               
-              <div className="bg-card p-6 rounded-lg border shadow-sm hover:shadow-md transition-shadow">
+              <div className="bg-card p-6 rounded-lg border shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => setCurrentView('versions')}>
                 <Settings className="h-12 w-12 mb-3 text-primary" />
-                <h3 className="font-semibold text-lg mb-2">Personalizar</h3>
-                <p className="text-muted-foreground text-sm">Configura la aplicación según tus preferencias de lectura.</p>
+                <h3 className="font-semibold text-lg mb-2">Versiones Bíblicas</h3>
+                <p className="text-muted-foreground text-sm">Elige entre diferentes versiones de la Biblia para tu estudio personal.</p>
               </div>
             </div>
           </div>
