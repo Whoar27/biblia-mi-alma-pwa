@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,21 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Nueva paleta de colores temática
+				biblical: {
+					gold: 'hsl(45, 100%, 51%)',
+					'gold-light': 'hsl(48, 100%, 88%)',
+					purple: 'hsl(280, 100%, 70%)',
+					'purple-light': 'hsl(280, 100%, 95%)',
+					blue: 'hsl(220, 100%, 60%)',
+					'blue-light': 'hsl(220, 100%, 95%)',
+					green: 'hsl(120, 40%, 50%)',
+					'green-light': 'hsl(120, 40%, 95%)',
+					red: 'hsl(0, 70%, 60%)',
+					'red-light': 'hsl(0, 70%, 95%)',
+					orange: 'hsl(30, 100%, 60%)',
+					'orange-light': 'hsl(30, 100%, 95%)'
 				}
 			},
 			borderRadius: {
