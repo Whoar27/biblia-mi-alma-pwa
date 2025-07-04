@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { ChevronLeft, ChevronRight, Heart, Share2, BookOpen, Type, Settings } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart, Share2, BookOpen, Type, Settings, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ChapterReaderProps {
@@ -123,14 +122,93 @@ export const ChapterReader = ({ book, chapter, onChapterChange }: ChapterReaderP
     }
   };
 
+  const renderContent = () => {
+    // Capítulo 0 es la introducción
+    if (chapter === 0) {
+      return (
+        <div className="space-y-6">
+          <div className="flex items-center gap-2 mb-4">
+            <AlertCircle className="h-6 w-6 text-biblical-orange" />
+            <h2 className="text-xl font-bold">Introducción e Historia</h2>
+          </div>
+          <div className="prose prose-sm max-w-none">
+            <p className="text-justify leading-relaxed" style={{ fontSize: `${fontSize[0]}px` }}>
+              El libro de {book} es uno de los libros fundamentales de la Biblia. 
+              Su historia, contexto y mensaje principal han impactado a millones de personas 
+              a lo largo de los siglos. Este libro contiene enseñanzas profundas sobre la 
+              naturaleza de Dios, la condición humana y el plan divino de redención.
+            </p>
+            <p className="text-justify leading-relaxed" style={{ fontSize: `${fontSize[0]}px` }}>
+              En esta introducción exploraremos el trasfondo histórico, el propósito del libro, 
+              sus temas principales y cómo se relaciona con el resto de las Escrituras. 
+              Te invitamos a sumergirte en esta rica tradición de sabiduría divina.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    // Capítulos normales
+    return (
+      <div className="space-y-4">
+        {verses.map((verse) => {
+          const verseKey = `${book}-${chapter}-${verse.verse}`;
+          const isFavorite = favorites.has(verseKey);
+          
+          return (
+            <div key={verse.verse} className="flex gap-3 group">
+              <Badge variant="outline" className="shrink-0 mt-1 text-xs px-2 py-1">
+                {verse.verse}
+              </Badge>
+              <div className="flex-1">
+                <p 
+                  className="leading-relaxed text-justify"
+                  style={{ fontSize: `${fontSize[0]}px` }}
+                >
+                  {verse.text}
+                </p>
+                <div className="flex gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleFavorite(verseKey)}
+                    className={isFavorite ? "text-red-500" : ""}
+                  >
+                    <Heart className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => shareVerse(verse)}
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="p-4">
       <Card className="mb-6">
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle className="text-xl md:text-2xl flex items-center gap-2">
-              <BookOpen className="h-6 w-6" />
-              {book} {chapter}
+              {chapter === 0 ? (
+                <>
+                  <AlertCircle className="h-6 w-6 text-biblical-orange" />
+                  {book} - Introducción
+                </>
+              ) : (
+                <>
+                  <BookOpen className="h-6 w-6" />
+                  {book} {chapter}
+                </>
+              )}
             </CardTitle>
             <div className="flex gap-2">
               <Button 
@@ -143,8 +221,8 @@ export const ChapterReader = ({ book, chapter, onChapterChange }: ChapterReaderP
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => onChapterChange(Math.max(1, chapter - 1))}
-                disabled={chapter <= 1}
+                onClick={() => onChapterChange(Math.max(0, chapter - 1))}
+                disabled={chapter <= 0}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -196,67 +274,31 @@ export const ChapterReader = ({ book, chapter, onChapterChange }: ChapterReaderP
         <CardContent>
           <div className="flex justify-between items-center mb-4 text-sm text-muted-foreground">
             <Badge variant="outline">{selectedVersion}</Badge>
-            <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={shareChapter}>
-                <Share2 className="h-4 w-4 mr-1" />
-                Compartir capítulo
-              </Button>
-            </div>
+            {chapter > 0 && (
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={shareChapter}>
+                  <Share2 className="h-4 w-4 mr-1" />
+                  Compartir capítulo
+                </Button>
+              </div>
+            )}
           </div>
           
-          <div className="space-y-4">
-            {verses.map((verse) => {
-              const verseKey = `${book}-${chapter}-${verse.verse}`;
-              const isFavorite = favorites.has(verseKey);
-              
-              return (
-                <div key={verse.verse} className="flex gap-3 group">
-                  <Badge variant="outline" className="shrink-0 mt-1 min-w-[2.5rem] justify-center">
-                    {verse.verse}
-                  </Badge>
-                  <div className="flex-1">
-                    <p 
-                      className="leading-relaxed text-justify"
-                      style={{ fontSize: `${fontSize[0]}px` }}
-                    >
-                      {verse.text}
-                    </p>
-                    <div className="flex gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleFavorite(verseKey)}
-                        className={isFavorite ? "text-red-500" : ""}
-                      >
-                        <Heart className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => shareVerse(verse)}
-                      >
-                        <Share2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          {renderContent()}
           
           <div className="flex justify-between items-center mt-8 pt-4 border-t">
             <Button 
               variant="outline"
-              onClick={() => onChapterChange(Math.max(1, chapter - 1))}
-              disabled={chapter <= 1}
+              onClick={() => onChapterChange(Math.max(0, chapter - 1))}
+              disabled={chapter <= 0}
               className="flex items-center gap-2"
             >
               <ChevronLeft className="h-4 w-4" />
-              Capítulo anterior
+              {chapter === 1 ? 'Introducción' : 'Capítulo anterior'}
             </Button>
             
             <span className="text-sm text-muted-foreground">
-              Capítulo {chapter}
+              {chapter === 0 ? 'Introducción' : `Capítulo ${chapter}`}
             </span>
             
             <Button 
@@ -264,7 +306,7 @@ export const ChapterReader = ({ book, chapter, onChapterChange }: ChapterReaderP
               onClick={() => onChapterChange(chapter + 1)}
               className="flex items-center gap-2"
             >
-              Siguiente capítulo
+              {chapter === 0 ? 'Capítulo 1' : 'Siguiente capítulo'}
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>

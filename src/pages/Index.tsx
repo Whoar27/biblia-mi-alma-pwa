@@ -1,28 +1,27 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Home, Book, Calendar, Search, Settings } from "lucide-react";
+import { Home, Book, Calendar, Search, Settings, AlertCircle } from "lucide-react";
 import { BooksList } from "@/components/BooksList";
 import { ChapterReader } from "@/components/ChapterReader";
-import { SearchResults } from "@/components/SearchResults";
 import { FavoriteVerses } from "@/components/FavoriteVerses";
-import { ReadingPlans } from "@/components/ReadingPlans";
-import { OptionsMenu } from "@/components/OptionsMenu";
-import { DailyVerse } from "@/components/DailyVerse";
 import { VerseExplanation } from "@/components/VerseExplanation";
 import { BibleVersionSelector } from "@/components/BibleVersionSelector";
-import { AppHeader } from "@/components/AppHeader";
+import { PageHeader } from "@/components/PageHeader";
 import { EnhancedBooksList } from "@/components/EnhancedBooksList";
 import { EnhancedBibleVersionSelector } from "@/components/EnhancedBibleVersionSelector";
-import { EnhancedReadingPlans } from "@/components/EnhancedReadingPlans";
+import { MyPlans } from "@/components/MyPlans";
+import { FeaturedPlans } from "@/components/FeaturedPlans";
+import { EnhancedPlansSection } from "@/components/EnhancedPlansSection";
+import { EnhancedSearchSection } from "@/components/EnhancedSearchSection";
+import { EnhancedOptionsSection } from "@/components/EnhancedOptionsSection";
+import { DailyVerse } from "@/components/DailyVerse";
 import { useLastRead } from "@/hooks/useLastRead";
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<'home' | 'books' | 'chapter' | 'search' | 'plans' | 'options' | 'explanation' | 'versions' | 'profile' | 'stats' | 'enhanced-books' | 'enhanced-versions'>('home');
   const [selectedBook, setSelectedBook] = useState<string>('');
   const [selectedChapter, setSelectedChapter] = useState<number>(1);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [currentVerseForExplanation, setCurrentVerseForExplanation] = useState<any>(null);
   const [selectedBibleVersion, setSelectedBibleVersion] = useState<string>('RVR1960');
   const { lastRead, updateLastRead } = useLastRead();
@@ -46,12 +45,6 @@ const Index = () => {
     setSelectedChapter(chapter);
     updateLastRead(bookName, chapter);
     setCurrentView('chapter');
-  };
-
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    setSearchResults([]);
-    setCurrentView('search');
   };
 
   const handleExplainVerse = (verse: any) => {
@@ -79,7 +72,6 @@ const Index = () => {
     switch (currentView) {
       case 'books':
         if (lastRead) {
-          // Si hay última lectura, ir directamente al capítulo
           handleChapterSelect(lastRead.book, lastRead.chapter);
           return null;
         }
@@ -113,11 +105,11 @@ const Index = () => {
           />
         );
       case 'search':
-        return <SearchResults query={searchQuery} results={searchResults} onSearch={handleSearch} />;
+        return <EnhancedSearchSection />;
       case 'plans':
-        return <ReadingPlans />;
+        return <EnhancedPlansSection />;
       case 'options':
-        return <OptionsMenu />;
+        return <EnhancedOptionsSection />;
       case 'explanation':
         return (
           <VerseExplanation 
@@ -155,7 +147,8 @@ const Index = () => {
               selectedVersion={selectedBibleVersion}
             />
             
-            <EnhancedReadingPlans />
+            <MyPlans />
+            <FeaturedPlans />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto mt-8">
               <div 
@@ -208,7 +201,6 @@ const Index = () => {
               size="sm"
               onClick={() => {
                 if (item.id === 'books') {
-                  // Mostrar navegación mejorada para libros
                   if (lastRead) {
                     handleChapterSelect(lastRead.book, lastRead.chapter);
                   } else {
@@ -235,36 +227,17 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <AppHeader 
+      <PageHeader 
+        page={currentView === 'enhanced-books' || currentView === 'enhanced-versions' ? 'bible' : currentView}
         onProfileClick={() => setCurrentView('profile')}
         onStatsClick={() => setCurrentView('stats')}
         userProfile={userProfile}
+        currentBook={selectedBook}
+        currentChapter={selectedChapter}
+        selectedVersion={selectedBibleVersion}
+        onBookChapterClick={() => setCurrentView('enhanced-books')}
+        onVersionClick={() => setCurrentView('enhanced-versions')}
       />
-      
-      {/* Navegación especial para capítulos */}
-      {currentView === 'chapter' && (
-        <div className="bg-gradient-to-r from-biblical-green-light to-biblical-blue-light p-3 border-b">
-          <div className="flex justify-between items-center max-w-4xl mx-auto">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setCurrentView('enhanced-books')}
-              className="text-biblical-green hover:bg-biblical-green-light"
-            >
-              {selectedBook} {selectedChapter}
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setCurrentView('enhanced-versions')}
-              className="text-biblical-blue hover:bg-biblical-blue-light"
-            >
-              {selectedBibleVersion}
-            </Button>
-          </div>
-        </div>
-      )}
       
       <main className="max-w-4xl mx-auto min-h-[calc(100vh-140px)]">
         {renderContent()}
