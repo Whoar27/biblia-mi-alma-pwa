@@ -1,6 +1,6 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 
 interface FeaturedPlan {
   id: string;
@@ -41,16 +41,23 @@ export const FeaturedPlans = () => {
     <div className="mb-6">
       <h3 className="text-lg font-semibold mb-4">Planes Destacados</h3>
       
-      <Carousel className="w-full max-w-sm mx-auto md:max-w-full">
+      <Carousel className="w-full" opts={{ loop: false }}>
         <CarouselContent className="-ml-2 md:-ml-4">
-          {featuredPlans.map((plan) => (
-            <CarouselItem key={plan.id} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3">
-              <Card className="hover:shadow-md transition-shadow cursor-pointer">
+          {featuredPlans.map((plan, index) => (
+            <CarouselItem 
+              key={plan.id} 
+              className={`pl-2 md:pl-4 ${
+                index === featuredPlans.length - 1 
+                  ? 'basis-4/5 md:basis-1/2' 
+                  : 'basis-4/5 md:basis-1/2'
+              }`}
+            >
+              <Card className="hover:shadow-md transition-shadow cursor-pointer rounded-2xl">
                 <CardContent className="p-3">
                   <img 
                     src={plan.image} 
                     alt={plan.title}
-                    className="w-full h-24 object-cover rounded-md bg-gradient-to-br from-biblical-gold-light to-biblical-orange-light mb-2"
+                    className="w-full h-24 object-cover rounded-xl bg-gradient-to-br from-biblical-gold-light to-biblical-orange-light mb-2"
                   />
                   <p className="text-sm text-muted-foreground text-center">
                     {plan.description}
@@ -60,8 +67,6 @@ export const FeaturedPlans = () => {
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious />
-        <CarouselNext />
       </Carousel>
     </div>
   );

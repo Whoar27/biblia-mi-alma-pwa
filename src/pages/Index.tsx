@@ -60,6 +60,10 @@ const Index = () => {
     setSelectedBibleVersion(version);
   };
 
+  const handleBackToBooks = () => {
+    setCurrentView('enhanced-books');
+  };
+
   const navigationItems = [
     { id: 'home', icon: Home, label: 'Inicio' },
     { id: 'books', icon: Book, label: 'Biblia' },
@@ -67,6 +71,16 @@ const Index = () => {
     { id: 'search', icon: Search, label: 'Buscar' },
     { id: 'options', icon: Settings, label: 'Opciones' }
   ];
+
+  const getPageForHeader = (): 'home' | 'bible' | 'plans' | 'search' | 'options' => {
+    if (currentView === 'chapter' || currentView === 'enhanced-books' || currentView === 'enhanced-versions') {
+      return 'bible';
+    }
+    if (currentView === 'profile' || currentView === 'stats' || currentView === 'explanation' || currentView === 'versions') {
+      return 'home';
+    }
+    return currentView as 'home' | 'bible' | 'plans' | 'search' | 'options';
+  };
 
   const renderContent = () => {
     switch (currentView) {
@@ -102,6 +116,7 @@ const Index = () => {
               setSelectedChapter(chapter);
               updateLastRead(selectedBook, chapter);
             }}
+            onBackToBooks={handleBackToBooks}
           />
         );
       case 'search':
@@ -152,7 +167,7 @@ const Index = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto mt-8">
               <div 
-                className="bg-gradient-to-br from-biblical-purple-light to-biblical-blue-light p-6 rounded-lg border shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
+                className="bg-gradient-to-br from-biblical-purple-light to-biblical-blue-light p-6 rounded-full border shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
                 onClick={() => {
                   if (lastRead) {
                     handleChapterSelect(lastRead.book, lastRead.chapter);
@@ -174,7 +189,7 @@ const Index = () => {
               </div>
               
               <div 
-                className="bg-gradient-to-br from-biblical-gold-light to-biblical-orange-light p-6 rounded-lg border shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
+                className="bg-gradient-to-br from-biblical-gold-light to-biblical-orange-light p-6 rounded-full border shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
                 onClick={() => setCurrentView('search')}
               >
                 <Search className="h-12 w-12 mb-3 text-biblical-orange" />
@@ -210,7 +225,7 @@ const Index = () => {
                   setCurrentView(item.id as any);
                 }
               }}
-              className={`flex flex-col items-center gap-1 h-auto py-2 px-3 ${
+              className={`flex flex-col items-center gap-1 h-auto py-2 px-3 rounded-full ${
                 isActive 
                   ? 'text-biblical-purple bg-biblical-purple-light' 
                   : 'text-muted-foreground hover:text-foreground'
@@ -228,7 +243,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background pb-20">
       <PageHeader 
-        page={currentView === 'enhanced-books' || currentView === 'enhanced-versions' ? 'bible' : currentView}
+        page={getPageForHeader()}
         onProfileClick={() => setCurrentView('profile')}
         onStatsClick={() => setCurrentView('stats')}
         userProfile={userProfile}

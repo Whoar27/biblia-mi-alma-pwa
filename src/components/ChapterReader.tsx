@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +12,7 @@ interface ChapterReaderProps {
   book: string;
   chapter: number;
   onChapterChange: (chapter: number) => void;
+  onBackToBooks?: () => void;
 }
 
 const sampleVerses = {
@@ -49,7 +51,7 @@ const sampleVerses = {
   }
 };
 
-export const ChapterReader = ({ book, chapter, onChapterChange }: ChapterReaderProps) => {
+export const ChapterReader = ({ book, chapter, onChapterChange, onBackToBooks }: ChapterReaderProps) => {
   const [verses, setVerses] = useState<{ verse: number; text: string }[]>([]);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [fontSize, setFontSize] = useState([16]);
@@ -92,13 +94,22 @@ export const ChapterReader = ({ book, chapter, onChapterChange }: ChapterReaderP
   };
 
   const shareVerse = (verse: { verse: number; text: string }) => {
+    const verseText = `${book} ${chapter}:${verse.verse} - ${verse.text}`;
+    
     if (navigator.share) {
       navigator.share({
         title: `${book} ${chapter}:${verse.verse}`,
-        text: verse.text
+        text: verseText
+      }).catch(() => {
+        // Si falla el share nativo, copiamos al portapapeles
+        navigator.clipboard.writeText(verseText);
+        toast({
+          title: "Copiado",
+          description: "El versículo fue copiado al portapapeles"
+        });
       });
     } else {
-      navigator.clipboard.writeText(`${book} ${chapter}:${verse.verse} - ${verse.text}`);
+      navigator.clipboard.writeText(verseText);
       toast({
         title: "Copiado",
         description: "El versículo fue copiado al portapapeles"
@@ -108,13 +119,22 @@ export const ChapterReader = ({ book, chapter, onChapterChange }: ChapterReaderP
 
   const shareChapter = () => {
     const chapterText = verses.map(v => `${v.verse}. ${v.text}`).join('\n');
+    const fullText = `${book} ${chapter}\n\n${chapterText}`;
+    
     if (navigator.share) {
       navigator.share({
         title: `${book} ${chapter}`,
-        text: chapterText
+        text: fullText
+      }).catch(() => {
+        // Si falla el share nativo, copiamos al portapapeles
+        navigator.clipboard.writeText(fullText);
+        toast({
+          title: "Capítulo copiado",
+          description: "El capítulo completo fue copiado al portapapeles"
+        });
       });
     } else {
-      navigator.clipboard.writeText(`${book} ${chapter}\n\n${chapterText}`);
+      navigator.clipboard.writeText(fullText);
       toast({
         title: "Capítulo copiado",
         description: "El capítulo completo fue copiado al portapapeles"
@@ -157,7 +177,7 @@ export const ChapterReader = ({ book, chapter, onChapterChange }: ChapterReaderP
           
           return (
             <div key={verse.verse} className="flex gap-3 group">
-              <Badge variant="outline" className="shrink-0 mt-1 text-xs px-2 py-1">
+              <Badge variant="outline" className="shrink-0 mt-1 text-xs px-2 py-1 rounded-full">
                 {verse.verse}
               </Badge>
               <div className="flex-1">
@@ -172,7 +192,7 @@ export const ChapterReader = ({ book, chapter, onChapterChange }: ChapterReaderP
                     variant="ghost"
                     size="sm"
                     onClick={() => toggleFavorite(verseKey)}
-                    className={isFavorite ? "text-red-500" : ""}
+                    className={`rounded-full ${isFavorite ? "text-red-500" : ""}`}
                   >
                     <Heart className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
                   </Button>
@@ -180,6 +200,7 @@ export const ChapterReader = ({ book, chapter, onChapterChange }: ChapterReaderP
                     variant="ghost"
                     size="sm"
                     onClick={() => shareVerse(verse)}
+                    className="rounded-full"
                   >
                     <Share2 className="h-4 w-4" />
                   </Button>
@@ -196,8 +217,11 @@ export const ChapterReader = ({ book, chapter, onChapterChange }: ChapterReaderP
     <div className="p-4">
       <Card className="mb-6">
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle className="text-xl md:text-2xl flex items-center gap-2">
+          <div className="flex justify-between items-center flex-wrap gap-2">
+            <CardTitle 
+              className="text-xl md:text-2xl flex items-center gap-2 cursor-pointer hover:text-biblical-purple transition-colors"
+              onClick={onBackToBooks}
+            >
               {chapter === 0 ? (
                 <>
                   <AlertCircle className="h-6 w-6 text-biblical-orange" />
@@ -210,11 +234,12 @@ export const ChapterReader = ({ book, chapter, onChapterChange }: ChapterReaderP
                 </>
               )}
             </CardTitle>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => setShowSettings(!showSettings)}
+                className="rounded-full"
               >
                 <Settings className="h-4 w-4" />
               </Button>
@@ -223,6 +248,7 @@ export const ChapterReader = ({ book, chapter, onChapterChange }: ChapterReaderP
                 size="sm"
                 onClick={() => onChapterChange(Math.max(0, chapter - 1))}
                 disabled={chapter <= 0}
+                className="rounded-full"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -230,6 +256,7 @@ export const ChapterReader = ({ book, chapter, onChapterChange }: ChapterReaderP
                 variant="outline" 
                 size="sm"
                 onClick={() => onChapterChange(chapter + 1)}
+                className="rounded-full"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -257,7 +284,7 @@ export const ChapterReader = ({ book, chapter, onChapterChange }: ChapterReaderP
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Versión:</span>
                 <Select value={selectedVersion} onValueChange={setSelectedVersion}>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-32 rounded-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -272,11 +299,11 @@ export const ChapterReader = ({ book, chapter, onChapterChange }: ChapterReaderP
           )}
         </CardHeader>
         <CardContent>
-          <div className="flex justify-between items-center mb-4 text-sm text-muted-foreground">
-            <Badge variant="outline">{selectedVersion}</Badge>
+          <div className="flex justify-between items-center mb-4 text-sm text-muted-foreground flex-wrap gap-2">
+            <Badge variant="outline" className="rounded-full">{selectedVersion}</Badge>
             {chapter > 0 && (
               <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={shareChapter}>
+                <Button variant="ghost" size="sm" onClick={shareChapter} className="rounded-full">
                   <Share2 className="h-4 w-4 mr-1" />
                   Compartir capítulo
                 </Button>
@@ -286,25 +313,25 @@ export const ChapterReader = ({ book, chapter, onChapterChange }: ChapterReaderP
           
           {renderContent()}
           
-          <div className="flex justify-between items-center mt-8 pt-4 border-t">
+          <div className="flex justify-between items-center mt-8 pt-4 border-t gap-4 flex-wrap">
             <Button 
               variant="outline"
               onClick={() => onChapterChange(Math.max(0, chapter - 1))}
               disabled={chapter <= 0}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 rounded-full flex-1 min-w-fit"
             >
               <ChevronLeft className="h-4 w-4" />
               {chapter === 1 ? 'Introducción' : 'Capítulo anterior'}
             </Button>
             
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm text-muted-foreground text-center whitespace-nowrap">
               {chapter === 0 ? 'Introducción' : `Capítulo ${chapter}`}
             </span>
             
             <Button 
               variant="outline"
               onClick={() => onChapterChange(chapter + 1)}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 rounded-full flex-1 min-w-fit"
             >
               {chapter === 0 ? 'Capítulo 1' : 'Siguiente capítulo'}
               <ChevronRight className="h-4 w-4" />
