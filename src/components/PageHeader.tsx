@@ -94,62 +94,67 @@ export const PageHeader = ({
     );
   }
 
-  // Header para otras páginas
+  // Header simplificado para otras páginas (sin títulos)
   return (
     <header className="bg-gradient-to-r from-biblical-purple to-biblical-blue text-white p-4 shadow-lg">
       <div className="flex items-center justify-between max-w-4xl mx-auto">
-        <h1 className="text-xl font-bold capitalize">{page}</h1>
-        
-        {page === 'bible' && currentBook && (
-          <div className="flex items-center gap-2">
-            <div className="flex rounded-lg overflow-hidden">
+        <div className="flex items-center gap-2">
+          {page === 'bible' && currentBook && (
+            <>
               <Button
                 variant="ghost"
                 onClick={onBookChapterClick}
-                className="text-white hover:bg-white/10 rounded-none bg-white/10"
+                className="text-white hover:bg-white/10 bg-white/10"
               >
                 {currentBook} {currentChapter}
               </Button>
               <Button
                 variant="ghost"
                 onClick={onVersionClick}
-                className="text-white hover:bg-white/10 rounded-none bg-white/10"
+                className="text-white hover:bg-white/10 bg-white/10"
               >
                 {selectedVersion}
               </Button>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-white hover:bg-white/10"
-            >
-              <Search className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-white hover:bg-white/10"
-            >
-              <Type className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-white hover:bg-white/10"
-            >
-              <Palette className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
+            </>
+          )}
+        </div>
         
-        {page === 'options' && (
-          <Button
-            variant="ghost"
-            className="text-white hover:bg-white/10 bg-biblical-orange"
-          >
-            Donar
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {page === 'bible' && (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-white hover:bg-white/10"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-white hover:bg-white/10"
+              >
+                <Type className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-white hover:bg-white/10"
+              >
+                <Palette className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+          
+          {page === 'options' && (
+            <Button
+              variant="ghost"
+              className="text-white hover:bg-white/10 bg-biblical-orange"
+            >
+              Donar
+            </Button>
+          )}
+        </div>
       </div>
     </header>
   );

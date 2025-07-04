@@ -1,10 +1,11 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, BookOpen } from "lucide-react";
+import { ChevronDown, BookOpen, AlertCircle } from "lucide-react";
 
 interface EnhancedBooksListProps {
   onBookSelect: (bookName: string) => void;
@@ -132,6 +133,21 @@ export const EnhancedBooksList = ({
         <CollapsibleContent>
           <CardContent>
             <div className="grid grid-cols-5 gap-2 pt-2">
+              {/* Capítulo 0 - Introducción */}
+              <Button
+                variant={
+                  currentBook === book.name && currentChapter === 0 
+                    ? "default" 
+                    : "outline"
+                }
+                size="sm"
+                onClick={() => onChapterSelect(book.name, 0)}
+                className="h-8 flex items-center justify-center"
+              >
+                <AlertCircle className="h-3 w-3" />
+              </Button>
+              
+              {/* Capítulos regulares */}
               {Array.from({ length: book.chapters }, (_, i) => i + 1).map(chapter => (
                 <Button
                   key={chapter}

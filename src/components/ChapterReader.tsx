@@ -1,12 +1,13 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { ChevronLeft, ChevronRight, Heart, Share2, BookOpen, Type, Settings, AlertCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, BookOpen, Type, Settings, AlertCircle, Search, Palette } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { VerseOptionsPanel } from "./VerseOptionsPanel";
 
 interface ChapterReaderProps {
   book: string;
@@ -57,7 +58,11 @@ export const ChapterReader = ({ book, chapter, onChapterChange, onBackToBooks }:
   const [fontSize, setFontSize] = useState([16]);
   const [showSettings, setShowSettings] = useState(false);
   const [selectedVersion, setSelectedVersion] = useState("RVR1960");
+  const [selectedVerse, setSelectedVerse] = useState<{ verse: number; text: string } | null>(null);
+  const [showNavigation, setShowNavigation] = useState(true);
+  const [isScrolled, setIsScrolled] = useState(false);
   const { toast } = useToast();
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const bookData = sampleVerses[book as keyof typeof sampleVerses];
@@ -75,82 +80,107 @@ export const ChapterReader = ({ book, chapter, onChapterChange, onBackToBooks }:
     }
   }, [book, chapter]);
 
-  const toggleFavorite = (verseKey: string) => {
-    const newFavorites = new Set(favorites);
-    if (newFavorites.has(verseKey)) {
-      newFavorites.delete(verseKey);
-      toast({
-        title: "Versículo removido",
-        description: "El versículo fue removido de favoritos"
-      });
+  // Mostrar navegación por 3 segundos al entrar
+  useEffect(() => {
+    setShowNavigation(true);
+    const timer = setTimeout(() => {
+      setShowNavigation(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [chapter]);
+
+  // Control de scroll para reducir tamaño de header
+  useEffect(() => {
+    const handleScroll = () => {
+      if (scrollRef.current) {
+        setIsScrolled(scrollRef.current.scrollTop > 20);
+      }
+    };
+
+    const scrollElement = scrollRef.current;
+    if (scrollElement) {
+      scrollElement.addEventListener('scroll', handleScroll);
+      return () => scrollElement.removeEventListener('scroll', handleScroll);
+    }
+  }, []);
+
+  const handleVerseClick = (verse: { verse: number; text: string }) => {
+    if (selectedVerse && selectedVerse.verse === verse.verse) {
+      setSelectedVerse(null);
     } else {
+      setSelectedVerse(verse);
+    }
+  };
+
+  const handleHighlight = () => {
+    toast({
+      title: "Versículo resaltado",
+      description: "El versículo ha sido resaltado"
+    });
+    setSelectedVerse(null);
+  };
+
+  const handleSave = () => {
+    if (selectedVerse) {
+      const verseKey = `${book}-${chapter}-${selectedVerse.verse}`;
+      const newFavorites = new Set(favorites);
       newFavorites.add(verseKey);
+      setFavorites(newFavorites);
       toast({
         title: "Versículo guardado",
         description: "El versículo fue agregado a favoritos"
       });
+      setSelectedVerse(null);
     }
-    setFavorites(newFavorites);
   };
 
-  const shareVerse = (verse: { verse: number; text: string }) => {
-    const verseText = `${book} ${chapter}:${verse.verse} - ${verse.text}`;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: `${book} ${chapter}:${verse.verse}`,
-        text: verseText
-      }).catch(() => {
-        // Si falla el share nativo, copiamos al portapapeles
+  const handleAddNote = () => {
+    toast({
+      title: "Nota agregada",
+      description: "Tu nota ha sido guardada"
+    });
+    setSelectedVerse(null);
+  };
+
+  const handleShare = () => {
+    if (selectedVerse) {
+      const verseText = `${book} ${chapter}:${selectedVerse.verse} - ${selectedVerse.text}`;
+      
+      if (navigator.share) {
+        navigator.share({
+          title: `${book} ${chapter}:${selectedVerse.verse}`,
+          text: verseText
+        }).catch(() => {
+          navigator.clipboard.writeText(verseText);
+          toast({
+            title: "Copiado",
+            description: "El versículo fue copiado al portapapeles"
+          });
+        });
+      } else {
         navigator.clipboard.writeText(verseText);
         toast({
           title: "Copiado",
           description: "El versículo fue copiado al portapapeles"
         });
-      });
-    } else {
-      navigator.clipboard.writeText(verseText);
-      toast({
-        title: "Copiado",
-        description: "El versículo fue copiado al portapapeles"
-      });
+      }
+      setSelectedVerse(null);
     }
   };
 
-  const shareChapter = () => {
-    const chapterText = verses.map(v => `${v.verse}. ${v.text}`).join('\n');
-    const fullText = `${book} ${chapter}\n\n${chapterText}`;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: `${book} ${chapter}`,
-        text: fullText
-      }).catch(() => {
-        // Si falla el share nativo, copiamos al portapapeles
-        navigator.clipboard.writeText(fullText);
-        toast({
-          title: "Capítulo copiado",
-          description: "El capítulo completo fue copiado al portapapeles"
-        });
-      });
-    } else {
-      navigator.clipboard.writeText(fullText);
-      toast({
-        title: "Capítulo copiado",
-        description: "El capítulo completo fue copiado al portapapeles"
-      });
-    }
+  const handleCreateImage = () => {
+    toast({
+      title: "Imagen creada",
+      description: "La imagen con el versículo ha sido creada"
+    });
+    setSelectedVerse(null);
   };
 
   const renderContent = () => {
     // Capítulo 0 es la introducción
     if (chapter === 0) {
       return (
-        <div className="space-y-6">
-          <div className="flex items-center gap-2 mb-4">
-            <AlertCircle className="h-6 w-6 text-biblical-orange" />
-            <h2 className="text-xl font-bold">Introducción e Historia</h2>
-          </div>
+        <div className="space-y-6 p-4">
           <div className="prose prose-sm max-w-none">
             <p className="text-justify leading-relaxed" style={{ fontSize: `${fontSize[0]}px` }}>
               El libro de {book} es uno de los libros fundamentales de la Biblia. 
@@ -170,41 +200,24 @@ export const ChapterReader = ({ book, chapter, onChapterChange, onBackToBooks }:
 
     // Capítulos normales
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 p-4">
         {verses.map((verse) => {
           const verseKey = `${book}-${chapter}-${verse.verse}`;
           const isFavorite = favorites.has(verseKey);
           
           return (
-            <div key={verse.verse} className="flex gap-3 group">
+            <div key={verse.verse} className="flex gap-3">
               <Badge variant="outline" className="shrink-0 mt-1 text-xs px-2 py-1 rounded-full">
                 {verse.verse}
               </Badge>
               <div className="flex-1">
                 <p 
-                  className="leading-relaxed text-justify"
+                  className="leading-relaxed text-justify cursor-pointer hover:bg-muted/30 rounded p-1 transition-colors"
                   style={{ fontSize: `${fontSize[0]}px` }}
+                  onClick={() => handleVerseClick(verse)}
                 >
                   {verse.text}
                 </p>
-                <div className="flex gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => toggleFavorite(verseKey)}
-                    className={`rounded-full ${isFavorite ? "text-red-500" : ""}`}
-                  >
-                    <Heart className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => shareVerse(verse)}
-                    className="rounded-full"
-                  >
-                    <Share2 className="h-4 w-4" />
-                  </Button>
-                </div>
               </div>
             </div>
           );
@@ -214,131 +227,146 @@ export const ChapterReader = ({ book, chapter, onChapterChange, onBackToBooks }:
   };
 
   return (
-    <div className="p-4">
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex justify-between items-center flex-wrap gap-2">
-            <CardTitle 
-              className="text-xl md:text-2xl flex items-center gap-2 cursor-pointer hover:text-biblical-purple transition-colors"
+    <div className="flex flex-col h-screen">
+      {/* Header compacto */}
+      <header className={`bg-gradient-to-r from-biblical-purple to-biblical-blue text-white shadow-lg transition-all duration-300 ${
+        isScrolled ? 'py-2' : 'py-4'
+      }`}>
+        <div className="flex items-center justify-between max-w-4xl mx-auto px-4">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
               onClick={onBackToBooks}
+              className="text-white hover:bg-white/10 p-1"
             >
               {chapter === 0 ? (
-                <>
-                  <AlertCircle className="h-6 w-6 text-biblical-orange" />
-                  {book} - Introducción
-                </>
+                <AlertCircle className="h-5 w-5 text-biblical-orange" />
               ) : (
-                <>
-                  <BookOpen className="h-6 w-6" />
-                  {book} {chapter}
-                </>
+                <BookOpen className="h-5 w-5" />
               )}
-            </CardTitle>
-            <div className="flex gap-2 flex-wrap">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setShowSettings(!showSettings)}
-                className="rounded-full"
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => onChapterChange(Math.max(0, chapter - 1))}
-                disabled={chapter <= 0}
-                className="rounded-full"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => onChapterChange(chapter + 1)}
-                className="rounded-full"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-          
-          {showSettings && (
-            <div className="mt-4 p-4 bg-muted rounded-lg space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Type className="h-4 w-4" />
-                  <span className="text-sm font-medium">Tamaño de fuente: {fontSize[0]}px</span>
-                </div>
-                <div className="w-32">
-                  <Slider
-                    value={fontSize}
-                    onValueChange={setFontSize}
-                    min={12}
-                    max={24}
-                    step={1}
-                  />
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Versión:</span>
-                <Select value={selectedVersion} onValueChange={setSelectedVersion}>
-                  <SelectTrigger className="w-32 rounded-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="RVR1960">RVR1960</SelectItem>
-                    <SelectItem value="NVI">NVI</SelectItem>
-                    <SelectItem value="RVA2015">RVA2015</SelectItem>
-                    <SelectItem value="LBLA">LBLA</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-        </CardHeader>
-        <CardContent>
-          <div className="flex justify-between items-center mb-4 text-sm text-muted-foreground flex-wrap gap-2">
-            <Badge variant="outline" className="rounded-full">{selectedVersion}</Badge>
-            {chapter > 0 && (
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={shareChapter} className="rounded-full">
-                  <Share2 className="h-4 w-4 mr-1" />
-                  Compartir capítulo
-                </Button>
-              </div>
-            )}
-          </div>
-          
-          {renderContent()}
-          
-          <div className="flex justify-between items-center mt-8 pt-4 border-t gap-4 flex-wrap">
-            <Button 
-              variant="outline"
-              onClick={() => onChapterChange(Math.max(0, chapter - 1))}
-              disabled={chapter <= 0}
-              className="flex items-center gap-2 rounded-full flex-1 min-w-fit"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              {chapter === 1 ? 'Introducción' : 'Capítulo anterior'}
             </Button>
-            
-            <span className="text-sm text-muted-foreground text-center whitespace-nowrap">
-              {chapter === 0 ? 'Introducción' : `Capítulo ${chapter}`}
-            </span>
-            
-            <Button 
-              variant="outline"
-              onClick={() => onChapterChange(chapter + 1)}
-              className="flex items-center gap-2 rounded-full flex-1 min-w-fit"
+            <div className={`transition-all duration-300 ${isScrolled ? 'text-sm' : 'text-lg'}`}>
+              <span className="font-semibold">{book}</span>
+              {chapter > 0 && <span className="ml-1">{chapter}</span>}
+              {chapter === 0 && <span className="ml-1 text-sm opacity-80">Introducción</span>}
+            </div>
+            <Badge variant="outline" className="bg-white/10 text-white border-white/20">
+              {selectedVersion}
+            </Badge>
+          </div>
+          
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-white hover:bg-white/10"
             >
-              {chapter === 0 ? 'Capítulo 1' : 'Siguiente capítulo'}
-              <ChevronRight className="h-4 w-4" />
+              <Search className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowSettings(!showSettings)}
+              className="text-white hover:bg-white/10"
+            >
+              <Type className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-white hover:bg-white/10"
+            >
+              <Palette className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowSettings(!showSettings)}
+              className="text-white hover:bg-white/10"
+            >
+              <Settings className="h-4 w-4" />
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+        
+        {showSettings && (
+          <div className="mt-2 mx-4 p-3 bg-white/10 rounded-lg space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Type className="h-4 w-4" />
+                <span className="text-sm font-medium">Tamaño: {fontSize[0]}px</span>
+              </div>
+              <div className="w-32">
+                <Slider
+                  value={fontSize}
+                  onValueChange={setFontSize}
+                  min={12}
+                  max={24}
+                  step={1}
+                />
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Versión:</span>
+              <Select value={selectedVersion} onValueChange={setSelectedVersion}>
+                <SelectTrigger className="w-32 bg-white/10 border-white/20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="RVR1960">RVR1960</SelectItem>
+                  <SelectItem value="NVI">NVI</SelectItem>
+                  <SelectItem value="RVA2015">RVA2015</SelectItem>
+                  <SelectItem value="LBLA">LBLA</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
+      </header>
+
+      {/* Contenido con scroll */}
+      <div ref={scrollRef} className="flex-1 overflow-auto">
+        {renderContent()}
+      </div>
+
+      {/* Navegación temporal */}
+      {showNavigation && chapter !== 0 && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 bg-background/95 backdrop-blur-sm rounded-full p-2 shadow-lg border">
+          <Button 
+            variant="outline"
+            size="sm"
+            onClick={() => onChapterChange(Math.max(0, chapter - 1))}
+            disabled={chapter <= 0}
+            className="rounded-full"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="outline"
+            size="sm"
+            onClick={() => onChapterChange(chapter + 1)}
+            className="rounded-full"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
+      {/* Panel de opciones de versículo */}
+      {selectedVerse && (
+        <VerseOptionsPanel
+          verse={selectedVerse}
+          bookName={book}
+          chapter={chapter}
+          onHighlight={handleHighlight}
+          onSave={handleSave}
+          onAddNote={handleAddNote}
+          onShare={handleShare}
+          onCreateImage={handleCreateImage}
+          onClose={() => setSelectedVerse(null)}
+        />
+      )}
     </div>
   );
 };
