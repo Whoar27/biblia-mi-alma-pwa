@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -5,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
-import { ChevronLeft, ChevronRight, BookOpen, Settings, AlertCircle, Share2, Search, Type, Palette } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { VerseOptionsPanel } from "./VerseOptionsPanel";
 
@@ -56,14 +57,8 @@ export const ChapterReader = ({ book, chapter, onChapterChange, onBackToBooks }:
   const [verses, setVerses] = useState<{ verse: number; text: string }[]>([]);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [fontSize, setFontSize] = useState([16]);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
-  const [showThemes, setShowThemes] = useState(false);
-  const [selectedVersion, setSelectedVersion] = useState("RVR1960");
   const [selectedVerse, setSelectedVerse] = useState<{ verse: number; text: string } | null>(null);
   const [showNavigation, setShowNavigation] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedTheme, setSelectedTheme] = useState("default");
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -91,64 +86,6 @@ export const ChapterReader = ({ book, chapter, onChapterChange, onBackToBooks }:
     }, 3000);
     return () => clearTimeout(timer);
   }, [chapter]);
-
-  // Control de scroll para reducir tamaño de header
-  useEffect(() => {
-    const handleScroll = () => {
-      if (scrollRef.current) {
-        //setIsScrolled(scrollRef.current.scrollTop > 20); // No es necesario aquí, el header es fijo
-      }
-    };
-
-    const scrollElement = scrollRef.current;
-    if (scrollElement) {
-      scrollElement.addEventListener('scroll', handleScroll);
-      return () => scrollElement.removeEventListener('scroll', handleScroll);
-    }
-  }, []);
-
-  const handleSearch = () => {
-    if (searchTerm.trim()) {
-      toast({
-        title: "Buscando...",
-        description: `Buscando "${searchTerm}" en ${book} ${chapter}`
-      });
-    }
-    setShowSearch(false);
-  };
-
-  const handleThemeChange = (theme: string) => {
-    setSelectedTheme(theme);
-    toast({
-      title: "Tema cambiado",
-      description: `Tema "${theme}" aplicado`
-    });
-    setShowThemes(false);
-  };
-
-  const handleShareChapter = () => {
-    const chapterText = `${book} ${chapter} - Biblia ${selectedVersion}`;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: `${book} ${chapter}`,
-        text: chapterText,
-        url: window.location.href
-      }).catch(() => {
-        navigator.clipboard.writeText(chapterText);
-        toast({
-          title: "Copiado",
-          description: "El enlace del capítulo fue copiado al portapapeles"
-        });
-      });
-    } else {
-      navigator.clipboard.writeText(chapterText);
-      toast({
-        title: "Copiado",
-        description: "El enlace del capítulo fue copiado al portapapeles"
-      });
-    }
-  };
 
   const handleVerseClick = (verse: { verse: number; text: string }) => {
     if (selectedVerse && selectedVerse.verse === verse.verse) {
@@ -274,153 +211,8 @@ export const ChapterReader = ({ book, chapter, onChapterChange, onBackToBooks }:
 
   return (
     <div className="flex flex-col h-screen">
-      {/* Header fijo que no se oculta */}
-      <header className="bg-gradient-to-r from-biblical-purple to-biblical-blue text-white shadow-lg py-3">
-        <div className="flex items-center justify-between max-w-4xl mx-auto px-4">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              onClick={onBackToBooks}
-              className="text-white hover:bg-white/10 p-1"
-            >
-              {chapter === 0 ? (
-                <AlertCircle className="h-5 w-5 text-biblical-orange" />
-              ) : (
-                <BookOpen className="h-5 w-5" />
-              )}
-            </Button>
-            <div className="text-lg">
-              <span className="font-semibold">{book}</span>
-              {chapter > 0 && <span className="ml-1">{chapter}</span>}
-              {chapter === 0 && <span className="ml-1 text-sm opacity-80">Introducción</span>}
-            </div>
-            <Badge variant="outline" className="bg-white/10 text-white border-white/20">
-              {selectedVersion}
-            </Badge>
-          </div>
-          
-          <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowSearch(!showSearch)}
-              className="text-white hover:bg-white/10"
-            >
-              <Search className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowSettings(!showSettings)}
-              className="text-white hover:bg-white/10"
-            >
-              <Type className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowThemes(!showThemes)}
-              className="text-white hover:bg-white/10"
-            >
-              <Palette className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleShareChapter}
-              className="text-white hover:bg-white/10"
-            >
-              <Share2 className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-        
-        {/* Panel de búsqueda */}
-        {showSearch && (
-          <div className="mt-2 mx-4 p-3 bg-white/10 rounded-lg">
-            <div className="flex gap-2">
-              <Input
-                placeholder="Buscar en este capítulo..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/70"
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              />
-              <Button
-                onClick={handleSearch}
-                className="bg-white/20 hover:bg-white/30 text-white"
-              >
-                Buscar
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Panel de configuración de texto */}
-        {showSettings && (
-          <div className="mt-2 mx-4 p-3 bg-white/10 rounded-lg space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Type className="h-4 w-4" />
-                <span className="text-sm font-medium">Tamaño: {fontSize[0]}px</span>
-              </div>
-              <div className="w-32">
-                <Slider
-                  value={fontSize}
-                  onValueChange={setFontSize}
-                  min={12}
-                  max={24}
-                  step={1}
-                />
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Versión:</span>
-              <Select value={selectedVersion} onValueChange={setSelectedVersion}>
-                <SelectTrigger className="w-32 bg-white/10 border-white/20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="RVR1960">RVR1960</SelectItem>
-                  <SelectItem value="NVI">NVI</SelectItem>
-                  <SelectItem value="RVA2015">RVA2015</SelectItem>
-                  <SelectItem value="LBLA">LBLA</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        )}
-
-        {/* Panel de temas */}
-        {showThemes && (
-          <div className="mt-2 mx-4 p-3 bg-white/10 rounded-lg">
-            <div className="grid grid-cols-3 gap-2">
-              <Button
-                onClick={() => handleThemeChange("Claro")}
-                className={`bg-white text-black hover:bg-gray-100 ${selectedTheme === "Claro" ? "ring-2 ring-white" : ""}`}
-              >
-                Claro
-              </Button>
-              <Button
-                onClick={() => handleThemeChange("Oscuro")}
-                className={`bg-gray-800 text-white hover:bg-gray-700 ${selectedTheme === "Oscuro" ? "ring-2 ring-white" : ""}`}
-              >
-                Oscuro
-              </Button>
-              <Button
-                onClick={() => handleThemeChange("Sepia")}
-                className={`bg-yellow-100 text-yellow-900 hover:bg-yellow-200 ${selectedTheme === "Sepia" ? "ring-2 ring-white" : ""}`}
-              >
-                Sepia
-              </Button>
-            </div>
-          </div>
-        )}
-      </header>
-
       {/* Contenido con scroll */}
-      <div ref={scrollRef} className="flex-1 overflow-auto">
+      <div ref={scrollRef} className="flex-1 overflow-auto pt-4">
         {renderContent()}
       </div>
 

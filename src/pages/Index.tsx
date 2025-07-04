@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Home, Book, Calendar, Search, Settings, AlertCircle } from "lucide-react";
@@ -254,7 +253,7 @@ const Index = () => {
         onVersionClick={() => setCurrentView('enhanced-versions')}
       />
       
-      <main className="max-w-4xl mx-auto min-h-[calc(100vh-140px)]">
+      <main className="max-w-4xl mx-auto min-h-[calc(100vh-140px)] pt-20">
         {renderContent()}
       </main>
       {renderBottomNavigation()}
