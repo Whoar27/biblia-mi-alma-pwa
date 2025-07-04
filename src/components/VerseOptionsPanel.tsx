@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Highlight, Heart, MessageSquare, Share2, Image } from "lucide-react";
+import { Highlighter, Heart, MessageSquare, Share2, Image } from "lucide-react";
 
 interface VerseOptionsPanelProps {
   verse: { verse: number; text: string };
@@ -40,7 +40,7 @@ export const VerseOptionsPanel = ({
               onClick={onHighlight}
               className="flex flex-col items-center gap-1 h-auto py-2"
             >
-              <Highlight className="h-5 w-5" />
+              <Highlighter className="h-5 w-5" />
               <span className="text-xs">Resaltar</span>
             </Button>
             <Button
