@@ -3,14 +3,14 @@ import App from './App.tsx'
 import './index.css'
 
 // Limpieza de localStorage en primer inicio/migración
-(function() {
-  const allowedKeys = ['theme-global', 'theme-lectura']; // agrega aquí las claves que SÍ quieres conservar
-  Object.keys(localStorage).forEach(key => {
-    if (!allowedKeys.includes(key)) {
-      localStorage.removeItem(key);
-    }
-  });
-})();
+// (function() {
+//   const allowedKeys = ['theme-global', 'theme-lectura']; // agrega aquí las claves que SÍ quieres conservar
+//   Object.keys(localStorage).forEach(key => {
+//     if (!allowedKeys.includes(key)) {
+//       localStorage.removeItem(key);
+//     }
+//   });
+// })();
 
 // Aplica el tema global ANTES de renderizar la app
 (function() {
