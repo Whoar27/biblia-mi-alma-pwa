@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -44,7 +43,7 @@ export const PageHeader = ({
   const [showThemes, setShowThemes] = useState(false);
   const [fontSize, setFontSize] = useState([16]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedTheme, setSelectedTheme] = useState("default");
+  const [selectedTheme, setSelectedTheme] = useState(localStorage.getItem('theme-global') || 'light');
 
   // Detectar scroll para reducir el header
   useEffect(() => {
@@ -75,10 +74,7 @@ export const PageHeader = ({
 
   const handleThemeChange = (theme: string) => {
     setSelectedTheme(theme);
-    toast({
-      title: "Tema cambiado",
-      description: `Tema "${theme}" aplicado`
-    });
+    localStorage.setItem('theme-global', theme);
     setShowThemes(false);
   };
 
@@ -285,26 +281,15 @@ export const PageHeader = ({
         {/* Panel de temas */}
         {showThemes && (
           <div className="mt-2 mx-4 p-3 bg-white/10 rounded-lg">
-            <div className="grid grid-cols-3 gap-2">
+            {['light', 'dark', 'sepia'].map((theme) => (
               <Button
-                onClick={() => handleThemeChange("Claro")}
-                className={`bg-white text-black hover:bg-gray-100 ${selectedTheme === "Claro" ? "ring-2 ring-white" : ""}`}
+                key={theme}
+                onClick={() => handleThemeChange(theme)}
+                className={`bg-white text-black hover:bg-gray-100 ${selectedTheme === theme ? 'ring-2 ring-white' : ''}`}
               >
-                Claro
+                {theme === 'light' ? 'Claro' : theme === 'dark' ? 'Oscuro' : 'Sepia'}
               </Button>
-              <Button
-                onClick={() => handleThemeChange("Oscuro")}
-                className={`bg-gray-800 text-white hover:bg-gray-700 ${selectedTheme === "Oscuro" ? "ring-2 ring-white" : ""}`}
-              >
-                Oscuro
-              </Button>
-              <Button
-                onClick={() => handleThemeChange("Sepia")}
-                className={`bg-yellow-100 text-yellow-900 hover:bg-yellow-200 ${selectedTheme === "Sepia" ? "ring-2 ring-white" : ""}`}
-              >
-                Sepia
-              </Button>
-            </div>
+            ))}
           </div>
         )}
       </header>

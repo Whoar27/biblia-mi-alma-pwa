@@ -92,6 +92,36 @@ All colors MUST be HSL.
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
+  .sepia {
+    --background: 45 100% 88%; /* Sepia claro */
+    --foreground: 30 30% 30%; /* Sepia texto */
+    --card: 45 100% 88%;
+    --card-foreground: 30 30% 30%;
+    --popover: 45 100% 88%;
+    --popover-foreground: 30 30% 30%;
+    --primary: 30 30% 30%;
+    --primary-foreground: 45 100% 88%;
+    --secondary: 45 60% 80%;
+    --secondary-foreground: 30 30% 30%;
+    --muted: 45 60% 80%;
+    --muted-foreground: 30 30% 50%;
+    --accent: 45 60% 80%;
+    --accent-foreground: 30 30% 30%;
+    --destructive: 0 60% 50%;
+    --destructive-foreground: 30 30% 30%;
+    --border: 45 30% 70%;
+    --input: 45 30% 70%;
+    --ring: 30 30% 30%;
+    --sidebar-background: 45 100% 88%;
+    --sidebar-foreground: 30 30% 30%;
+    --sidebar-primary: 30 30% 30%;
+    --sidebar-primary-foreground: 45 100% 88%;
+    --sidebar-accent: 45 60% 80%;
+    --sidebar-accent-foreground: 30 30% 30%;
+    --sidebar-border: 45 30% 70%;
+    --sidebar-ring: 30 30% 30%;
+  }
 }
 
 @layer base {
@@ -101,5 +131,9 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  input, select, textarea, button {
+    @apply bg-background text-foreground border-border;
   }
 }

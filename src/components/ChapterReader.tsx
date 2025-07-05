@@ -258,45 +258,53 @@ const getBookChapterCount = (bookName: string): number => {
 // Función para obtener los estilos de un tema
 const getThemeStyles = (theme: string) => {
   const themes = {
-    'Claro': {
+    light: {
       background: 'bg-white',
       text: 'text-gray-900',
       border: 'border-gray-200',
       hover: 'hover:bg-gray-50',
       buttonBg: 'bg-white',
       buttonText: 'text-gray-900',
-      buttonBorder: 'border-gray-300'
+      buttonBorder: 'border-gray-300',
+      selectedBg: 'bg-gray-100',
+      selectedBorder: 'border border-gray-300',
+      selectedText: 'text-gray-900',
+      selectedBadgeBg: 'bg-gray-700',
+      selectedBadgeText: 'text-white',
+      selectedBadgeBorder: 'border-gray-700'
     },
-    'Oscuro': {
+    dark: {
       background: 'bg-gray-900',
       text: 'text-gray-100',
       border: 'border-gray-700',
       hover: 'hover:bg-gray-800',
       buttonBg: 'bg-gray-800',
       buttonText: 'text-gray-100',
-      buttonBorder: 'border-gray-600'
+      buttonBorder: 'border-gray-600',
+      selectedBg: 'bg-gray-700',
+      selectedBorder: 'border border-gray-500',
+      selectedText: 'text-gray-100',
+      selectedBadgeBg: 'bg-gray-500',
+      selectedBadgeText: 'text-white',
+      selectedBadgeBorder: 'border-gray-500'
     },
-    'Sepia': {
+    sepia: {
       background: 'bg-amber-50',
       text: 'text-amber-900',
       border: 'border-amber-200',
       hover: 'hover:bg-amber-100',
       buttonBg: 'bg-amber-100',
       buttonText: 'text-amber-900',
-      buttonBorder: 'border-amber-300'
-    },
-    'Alto contraste': {
-      background: 'bg-black',
-      text: 'text-white',
-      border: 'border-white',
-      hover: 'hover:bg-gray-900',
-      buttonBg: 'bg-white',
-      buttonText: 'text-black',
-      buttonBorder: 'border-white'
+      buttonBorder: 'border-amber-300',
+      selectedBg: 'bg-amber-200',
+      selectedBorder: 'border border-amber-400',
+      selectedText: 'text-amber-900',
+      selectedBadgeBg: 'bg-amber-700',
+      selectedBadgeText: 'text-white',
+      selectedBadgeBorder: 'border-amber-700'
     }
   };
-  
-  return themes[theme as keyof typeof themes] || themes['Claro'];
+  return themes[theme as keyof typeof themes] || themes['light'];
 };
 
 // Contexto para compartir el tema
@@ -304,7 +312,7 @@ export const ThemeContext = createContext<{
   currentTheme: string;
   getThemeStyles: (theme: string) => any;
 }>({
-  currentTheme: 'Claro',
+  currentTheme: 'light',
   getThemeStyles: () => ({})
 });
 
@@ -318,7 +326,7 @@ export const ChapterReader = ({ book, chapter, onChapterChange, onBackToBooks, s
   };
 
   const getStoredTheme = () => {
-    return localStorage.getItem('biblia-chapter-theme') || 'Claro';
+    return localStorage.getItem('theme-lectura') || localStorage.getItem('theme-global') || 'light';
   };
 
   const getStoredVersion = () => {
@@ -328,7 +336,7 @@ export const ChapterReader = ({ book, chapter, onChapterChange, onBackToBooks, s
   const [verses, setVerses] = useState<{ verse: number; text: string }[]>([]);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [fontSize, setFontSize] = useState(getStoredFontSize);
-  const [selectedVerse, setSelectedVerse] = useState<{ verse: number; text: string } | null>(null);
+  const [selectedVerses, setSelectedVerses] = useState<Set<number>>(new Set());
   const [showNavigation, setShowNavigation] = useState(true);
   const [showFontSizeMenu, setShowFontSizeMenu] = useState(false);
   const [showVersionMenu, setShowVersionMenu] = useState(false);
@@ -348,6 +356,12 @@ export const ChapterReader = ({ book, chapter, onChapterChange, onBackToBooks, s
   const [isAnimating, setIsAnimating] = useState(false);
   const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
   const [currentTheme, setCurrentTheme] = useState(getStoredTheme);
+
+  const themeBgHex = {
+    light: '#fff8e1',
+    dark: '#18181b',
+    sepia: '#fff8e1',
+  };
 
   // Aplicar versión guardada al inicializar
   useEffect(() => {
@@ -385,41 +399,48 @@ export const ChapterReader = ({ book, chapter, onChapterChange, onBackToBooks, s
   }, [chapter]);
 
   const handleVerseClick = (verse: { verse: number; text: string }) => {
-    if (selectedVerse && selectedVerse.verse === verse.verse) {
-      setSelectedVerse(null);
+    const newSelectedVerses = new Set(selectedVerses);
+    if (newSelectedVerses.has(verse.verse)) {
+      newSelectedVerses.delete(verse.verse);
     } else {
-      setSelectedVerse(verse);
+      newSelectedVerses.add(verse.verse);
     }
+    setSelectedVerses(newSelectedVerses);
   };
 
   const handleHighlight = () => {
+    const count = selectedVerses.size;
     toast({
-      title: "Versículo resaltado",
-      description: "El versículo ha sido resaltado"
+      title: count === 1 ? "Versículo resaltado" : `${count} versículos resaltados`,
+      description: count === 1 ? "El versículo ha sido resaltado" : `Los versículos han sido resaltados`
     });
-    setSelectedVerse(null);
+    setSelectedVerses(new Set());
   };
 
   const handleSave = () => {
-    if (selectedVerse) {
-      const verseKey = `${book}-${chapter}-${selectedVerse.verse}`;
+    if (selectedVerses.size > 0) {
       const newFavorites = new Set(favorites);
-      newFavorites.add(verseKey);
-      setFavorites(newFavorites);
-      toast({
-        title: "Versículo guardado",
-        description: "El versículo fue agregado a favoritos"
+      selectedVerses.forEach(verseNumber => {
+        const verseKey = `${book}-${chapter}-${verseNumber}`;
+        newFavorites.add(verseKey);
       });
-      setSelectedVerse(null);
+      setFavorites(newFavorites);
+      const count = selectedVerses.size;
+      toast({
+        title: count === 1 ? "Versículo guardado" : `${count} versículos guardados`,
+        description: count === 1 ? "El versículo fue agregado a favoritos" : "Los versículos fueron agregados a favoritos"
+      });
+      setSelectedVerses(new Set());
     }
   };
 
   const handleAddNote = () => {
+    const count = selectedVerses.size;
     toast({
-      title: "Nota agregada",
-      description: "Tu nota ha sido guardada"
+      title: count === 1 ? "Nota agregada" : `${count} notas agregadas`,
+      description: count === 1 ? "Tu nota ha sido guardada" : "Tus notas han sido guardadas"
     });
-    setSelectedVerse(null);
+    setSelectedVerses(new Set());
   };
 
   const handleShareChapter = () => {
@@ -433,7 +454,8 @@ export const ChapterReader = ({ book, chapter, onChapterChange, onBackToBooks, s
       // Para introducciones
       chapterContent = `El libro de ${book} es uno de los libros fundamentales de la Biblia. Su historia, contexto y mensaje principal han impactado a millones de personas a lo largo de los siglos. Este libro contiene enseñanzas profundas sobre la naturaleza de Dios, la condición humana y el plan divino de redención.
 
-En esta introducción exploraremos el trasfondo histórico, el propósito del libro, sus temas principales y cómo se relaciona con el resto de las Escrituras. Te invitamos a sumergirte en esta rica tradición de sabiduría divina.`;
+En esta introducción exploraremos el trasfondo histórico, el propósito del libro, 
+sus temas principales y cómo se relaciona con el resto de las Escrituras. Te invitamos a sumergirte en esta rica tradición de sabiduría divina.`;
     } else {
       // Para capítulos normales, incluir todos los versículos
       chapterContent = verses.map(verse => `${verse.verse}. ${verse.text}`).join('\n\n');
@@ -532,7 +554,7 @@ Compartido desde Biblia Mi Alma PWA`;
 
   const handleThemeChange = (theme: string) => {
     setCurrentTheme(theme);
-    localStorage.setItem('biblia-chapter-theme', theme);
+    localStorage.setItem('theme-lectura', theme);
     showSubtleToast(`Tema: ${theme}`);
   };
 
@@ -579,15 +601,32 @@ Compartido desde Biblia Mi Alma PWA`;
         {verses.map((verse) => {
           const verseKey = `${book}-${chapter}-${verse.verse}`;
           const isFavorite = favorites.has(verseKey);
+          const isSelected = selectedVerses.has(verse.verse);
           
           return (
-            <div key={verse.verse} className="flex gap-3">
-              <Badge variant="outline" className={`shrink-0 mt-1 text-xs px-2 py-1 rounded-full ${getThemeStyles(currentTheme).buttonBorder} ${getThemeStyles(currentTheme).text}`}>
+            <div
+              key={verse.verse}
+              className={`flex gap-3 p-3 rounded-lg transition-all duration-200 ${
+                isSelected ? getThemeStyles(currentTheme).selectedBg : getThemeStyles(currentTheme).background
+              }`}
+            >
+              <Badge
+                variant="outline"
+                className={`shrink-0 mt-1 text-xs px-2 py-1 rounded-full ${
+                  isSelected
+                    ? getThemeStyles(currentTheme).selectedBadgeBg + ' ' + getThemeStyles(currentTheme).selectedBadgeText + ' ' + getThemeStyles(currentTheme).buttonBorder
+                    : getThemeStyles(currentTheme).buttonBorder + ' ' + getThemeStyles(currentTheme).text
+                }`}
+              >
                 {verse.verse}
               </Badge>
               <div className="flex-1">
-                <p 
-                  className={`leading-relaxed cursor-pointer hover:${getThemeStyles(currentTheme).hover} transition-colors ${getThemeStyles(currentTheme).text}`}
+                <p
+                  className={`leading-relaxed cursor-pointer transition-colors ${
+                    isSelected
+                      ? getThemeStyles(currentTheme).selectedText
+                      : getThemeStyles(currentTheme).text + ' lg:hover:' + getThemeStyles(currentTheme).hover.replace('hover:', '')
+                  }`}
                   style={{ fontSize: `${fontSize[0]}px` }}
                   onClick={() => handleVerseClick(verse)}
                 >
@@ -916,10 +955,10 @@ Compartido desde Biblia Mi Alma PWA`;
           {renderContent()}
         </div>
 
-        {/* Panel de opciones de versículo */}
-        {selectedVerse && (
+        {/* Panel de opciones de versículos */}
+        {selectedVerses.size > 0 && (
           <VerseOptionsPanel
-            verse={selectedVerse}
+            verse={{ verse: Array.from(selectedVerses)[0], text: `${selectedVerses.size} versículo${selectedVerses.size > 1 ? 's' : ''} seleccionado${selectedVerses.size > 1 ? 's' : ''}` }}
             bookName={book}
             chapter={chapter}
             onHighlight={handleHighlight}
@@ -927,7 +966,7 @@ Compartido desde Biblia Mi Alma PWA`;
             onAddNote={handleAddNote}
             onShare={handleShareChapter}
             onCreateImage={() => {}}
-            onClose={() => setSelectedVerse(null)}
+            onClose={() => setSelectedVerses(new Set())}
           />
         )}
 
@@ -1007,7 +1046,7 @@ Compartido desde Biblia Mi Alma PWA`;
             </DialogHeader>
             <div className="space-y-4">
               <div className="grid gap-2">
-                {['Claro', 'Oscuro', 'Sepia', 'Alto contraste'].map((theme) => {
+                {['light', 'dark', 'sepia'].map((theme) => {
                   const themeStyles = getThemeStyles(theme);
                   const isSelected = currentTheme === theme;
                   
@@ -1024,37 +1063,20 @@ Compartido desde Biblia Mi Alma PWA`;
                           ? `${themeStyles.buttonBg} ${themeStyles.buttonText} ${themeStyles.buttonBorder}`
                           : `${themeStyles.buttonBg} ${themeStyles.buttonText} ${themeStyles.buttonBorder} hover:${themeStyles.hover}`
                       }`}
-                      style={{
-                        backgroundColor: isSelected ? undefined : 
-                          theme === 'Claro' ? '#ffffff' :
-                          theme === 'Oscuro' ? '#1f2937' :
-                          theme === 'Sepia' ? '#fef3c7' :
-                          '#000000',
-                        color: isSelected ? undefined :
-                          theme === 'Claro' ? '#111827' :
-                          theme === 'Oscuro' ? '#f9fafb' :
-                          theme === 'Sepia' ? '#92400e' :
-                          '#ffffff',
-                        borderColor: isSelected ? undefined :
-                          theme === 'Claro' ? '#d1d5db' :
-                          theme === 'Oscuro' ? '#4b5563' :
-                          theme === 'Sepia' ? '#f59e0b' :
-                          '#ffffff'
-                      }}
                     >
                       <div className="flex items-center gap-3 w-full">
                         <div 
                           className="w-4 h-4 rounded-full border-2"
                           style={{
                             backgroundColor: 
-                              theme === 'Claro' ? '#ffffff' :
-                              theme === 'Oscuro' ? '#1f2937' :
-                              theme === 'Sepia' ? '#fef3c7' :
+                              theme === 'light' ? '#ffffff' :
+                              theme === 'dark' ? '#1f2937' :
+                              theme === 'sepia' ? '#fef3c7' :
                               '#000000',
                             borderColor:
-                              theme === 'Claro' ? '#d1d5db' :
-                              theme === 'Oscuro' ? '#4b5563' :
-                              theme === 'Sepia' ? '#f59e0b' :
+                              theme === 'light' ? '#d1d5db' :
+                              theme === 'dark' ? '#4b5563' :
+                              theme === 'sepia' ? '#f59e0b' :
                               '#ffffff'
                           }}
                         />

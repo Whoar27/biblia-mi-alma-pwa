@@ -26,6 +26,7 @@ const Index = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const { lastRead, updateLastRead } = useLastRead();
   const [initialTestament, setInitialTestament] = useState<'old' | 'new' | undefined>(undefined);
+  const [readingTheme, setReadingTheme] = useState(localStorage.getItem('biblia-chapter-theme') || 'light');
 
   // Hook para detectar scroll
   useEffect(() => {
@@ -45,6 +46,12 @@ const Index = () => {
 
     window.addEventListener('bibleVersionChanged', handleVersionChange as EventListener);
     return () => window.removeEventListener('bibleVersionChanged', handleVersionChange as EventListener);
+  }, []);
+
+  useEffect(() => {
+    const handler = () => setReadingTheme(localStorage.getItem('biblia-chapter-theme') || 'light');
+    window.addEventListener('storage', handler);
+    return () => window.removeEventListener('storage', handler);
   }, []);
 
   // Mock user profile
@@ -113,6 +120,15 @@ const Index = () => {
     { id: 'enhanced-search', icon: Search, label: 'Buscar' },
     { id: 'enhanced-options', icon: Settings, label: 'Opciones' }
   ];
+
+  const getThemeStyles = (theme) => {
+    const themes = {
+      light: { background: 'bg-white', text: 'text-gray-900' },
+      dark: { background: 'bg-gray-900', text: 'text-white' },
+      sepia: { background: 'bg-amber-50', text: 'text-amber-900' },
+    };
+    return themes[theme] || themes['light'];
+  };
 
   const renderContent = () => {
     switch (currentView) {
@@ -197,20 +213,15 @@ const Index = () => {
   };
 
   const renderBottomNavigation = () => {
-    // Solo usar el tema cuando estamos en la sección de Biblia
     const isInBibleSection = currentView === 'chapter' || currentView === 'enhanced-books';
-    
+    let readingBg = getThemeStyles(readingTheme).background;
+    let readingText = getThemeStyles(readingTheme).text;
     return (
-      <nav className={`fixed bottom-0 left-0 right-0 border-t transition-all duration-300 ${
-        isInBibleSection 
-          ? 'bg-background border-border' 
-          : 'bg-background border-border'
-      }`}>
+      <nav className={`fixed bottom-0 left-0 right-0 border-t transition-all duration-300 bg-background border-border`}>
         <div className="flex justify-around items-center py-2 px-4 max-w-md mx-auto">
           {navigationItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentView === item.id;
-            
             return (
               <Button
                 key={item.id}
@@ -232,11 +243,11 @@ const Index = () => {
                 className={`flex flex-col items-center gap-1 h-auto py-2 px-3 rounded-2xl transition-all duration-200 ${
                   isActive 
                     ? 'text-biblical-purple bg-biblical-purple-light' 
-                    : 'text-muted-foreground hover:text-foreground'
+                    : 'text-foreground'
                 }`}
               >
-                <Icon className="h-5 w-5" />
-                <span className="text-xs font-medium">{item.label}</span>
+                <Icon className={`h-5 w-5 text-foreground`} />
+                <span className={`text-xs font-medium text-foreground`}>{item.label}</span>
               </Button>
             );
           })}
@@ -249,14 +260,12 @@ const Index = () => {
     <div className="min-h-screen bg-background pb-20">
       {/* Header específico para la página de inicio */}
       {currentView === 'index' && (
-        <header className={`fixed top-0 left-0 right-0 z-50 bg-background border-b border-border transition-all duration-300 ${
-          isScrolled ? 'py-2' : 'py-4'
-        }`}>
+        <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border py-2">
           <div className="max-w-4xl mx-auto px-4">
             <div className="flex items-center justify-between">
               {/* Lado izquierdo - Hoy */}
               <div className="flex items-center gap-2">
-                <h1 className={`font-bold ${isScrolled ? 'text-lg' : 'text-xl'}`}>
+                <h1 className="font-bold text-lg">
                   Hoy
                 </h1>
               </div>
@@ -265,19 +274,19 @@ const Index = () => {
               <div className="flex items-center gap-3">
                 {/* Icono de racha */}
                 <div className="flex items-center gap-1 bg-biblical-orange-light px-2 py-1 rounded-full">
-                  <Flame className={`text-biblical-orange ${isScrolled ? 'h-4 w-4' : 'h-5 w-5'}`} />
-                  <span className={`font-semibold text-biblical-orange ${isScrolled ? 'text-sm' : 'text-base'}`}>
+                  <Flame className="text-biblical-orange h-4 w-4" />
+                  <span className="font-semibold text-biblical-orange text-sm">
                     {userProfile.streak}
                   </span>
                 </div>
                 
                 {/* Icono de notificaciones */}
                 <Button variant="ghost" size="sm" className="p-2">
-                  <Bell className={`text-muted-foreground ${isScrolled ? 'h-5 w-5' : 'h-6 w-6'}`} />
+                  <Bell className="text-muted-foreground h-5 w-5" />
                 </Button>
                 
                 {/* Avatar del usuario */}
-                <Avatar className={`${isScrolled ? 'h-8 w-8' : 'h-10 w-10'}`}>
+                <Avatar className="h-8 w-8">
                   <AvatarImage src={userProfile.avatar} />
                   <AvatarFallback className="bg-biblical-purple text-white text-sm">
                     {getUserInitials(userProfile.name)}

@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Highlighter, Heart, MessageSquare, Share2, Image } from "lucide-react";
@@ -13,7 +12,14 @@ interface VerseOptionsPanelProps {
   onShare: () => void;
   onCreateImage: () => void;
   onClose: () => void;
+  theme?: 'light' | 'dark' | 'sepia';
 }
+
+const themeClasses = {
+  light: 'bg-white text-gray-900',
+  dark: 'bg-gray-900 text-white',
+  sepia: 'bg-amber-50 text-amber-900',
+};
 
 export const VerseOptionsPanel = ({
   verse,
@@ -24,11 +30,13 @@ export const VerseOptionsPanel = ({
   onAddNote,
   onShare,
   onCreateImage,
-  onClose
+  onClose,
+  theme = 'light',
 }: VerseOptionsPanelProps) => {
+  const classes = themeClasses[theme] || themeClasses['light'];
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t">
-      <Card className="rounded-none border-0">
+    <div className={`fixed bottom-0 left-0 right-0 z-50 border-t ${classes}`}>
+      <Card className={`rounded-none border-0 ${classes}`}>
         <CardContent className="p-4">
           <div className="text-sm text-muted-foreground mb-3 text-center">
             {bookName} {chapter}:{verse.verse}

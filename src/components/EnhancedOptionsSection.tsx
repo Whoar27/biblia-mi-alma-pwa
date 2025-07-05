@@ -66,8 +66,15 @@ const settingsOptions = [
   { icon: HelpCircle, title: 'Ayuda', description: 'Preguntas frecuentes y soporte' }
 ];
 
+const THEME_OPTIONS = [
+  { value: 'light', label: 'Claro' },
+  { value: 'dark', label: 'Oscuro' },
+  { value: 'sepia', label: 'Sepia' },
+];
+
 export const EnhancedOptionsSection = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState(() => localStorage.getItem('theme-global') || 'light');
 
   // Hook para detectar scroll
   useEffect(() => {
@@ -210,7 +217,32 @@ export const EnhancedOptionsSection = () => {
             <h3 className="text-lg font-semibold">Configuración</h3>
           </div>
           <div className="space-y-2">
+            {/* Selector de tema visual */}
+            <div className="p-4 border rounded-lg mb-2 flex items-center gap-4 bg-white dark:bg-gray-900">
+              <Palette className="h-5 w-5 text-biblical-blue" />
+              <div className="flex-1">
+                <h4 className="font-medium text-sm mb-1">Tema</h4>
+                <div className="flex gap-2">
+                  {THEME_OPTIONS.map(opt => (
+                    <button
+                      key={opt.value}
+                      className={`px-3 py-1 rounded-full border text-sm transition-all
+                        ${selectedTheme === opt.value
+                          ? 'bg-biblical-blue text-white border-biblical-blue'
+                          : 'bg-transparent text-biblical-blue border-biblical-blue/40 hover:bg-biblical-blue/10'}
+                      `}
+                      onClick={() => setSelectedTheme(opt.value)}
+                      aria-pressed={selectedTheme === opt.value}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            {/* Fin selector de tema */}
             {settingsOptions.map((option, index) => {
+              if(option.title === 'Tema') return null; // Ocultar opción previa de tema
               const IconComponent = option.icon;
               return (
                 <Card key={index} className="hover:shadow-md transition-shadow cursor-pointer">
