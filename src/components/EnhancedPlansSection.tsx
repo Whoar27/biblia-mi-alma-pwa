@@ -1,10 +1,9 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
-import { Star, Play, Clock } from "lucide-react";
+import { Star, Play, Clock, Calendar } from "lucide-react";
 
 interface Plan {
   id: string;
@@ -75,6 +74,17 @@ const filterOptions = [
 export const EnhancedPlansSection = () => {
   const [selectedTab, setSelectedTab] = useState("find");
   const [selectedFilter, setSelectedFilter] = useState("Nuevos");
+  const [isScrolled, setIsScrolled] = useState(false);
+  
+  // Hook para detectar scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
@@ -93,171 +103,189 @@ export const EnhancedPlansSection = () => {
   ];
 
   return (
-    <div className="p-4">
-      {/* Pestañas principales con estilo redondeado */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-        {tabs.map((tab) => (
-          <Button
-            key={tab.id}
-            variant={selectedTab === tab.id ? "default" : "outline"}
-            onClick={() => setSelectedTab(tab.id)}
-            className="rounded-full whitespace-nowrap"
-          >
-            {tab.label}
-          </Button>
-        ))}
-      </div>
-      
-      {selectedTab === "find" && (
-        <div className="space-y-6">
-          {/* Slider de planes principales */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Planes Destacados</h3>
-            <Carousel className="w-full" opts={{ loop: false }}>
-              <CarouselContent>
-                {allPlans.slice(0, 3).map((plan, index) => (
-                  <CarouselItem 
-                    key={plan.id} 
-                    className={`${
-                      index === allPlans.slice(0, 3).length - 1 
-                        ? 'basis-4/5 md:basis-1/2 lg:basis-1/3' 
-                        : 'basis-4/5 md:basis-1/2 lg:basis-1/3'
-                    }`}
-                  >
-                    <Card className="hover:shadow-md transition-shadow rounded-2xl">
-                      <CardContent className="p-4">
-                        <img 
-                          src={plan.image} 
-                          alt={plan.title}
-                          className="w-full h-32 object-cover rounded-xl bg-gradient-to-br from-biblical-purple-light to-biblical-blue-light mb-3"
-                        />
-                        <p className="text-sm text-muted-foreground text-center">
-                          {plan.description}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-            </Carousel>
+    <div>
+      {/* Header específico para planes */}
+      <header className={`fixed top-0 left-0 right-0 z-50 bg-background border-b border-border transition-all duration-300 ${
+        isScrolled ? 'py-2' : 'py-4'
+      }`}>
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="flex items-center gap-3 mb-3">
+            <Calendar className={`text-biblical-purple ${isScrolled ? 'h-5 w-5' : 'h-6 w-6'}`} />
+            <h1 className={`font-bold ${isScrolled ? 'text-lg' : 'text-xl'}`}>
+              Planes de Lectura
+            </h1>
           </div>
-
-          {/* Slider de categorías */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Categorías</h3>
-            <Carousel className="w-full" opts={{ loop: false }}>
-              <CarouselContent>
-                {categories.map((category, index) => (
-                  <CarouselItem 
-                    key={category.name} 
-                    className={`${
-                      index === categories.length - 1 
-                        ? 'basis-1/2 md:basis-1/3 lg:basis-1/4' 
-                        : 'basis-1/2 md:basis-1/3 lg:basis-1/4'
-                    }`}
-                  >
-                    <Card className="hover:shadow-md transition-shadow cursor-pointer rounded-2xl">
-                      <CardContent className="p-4 text-center">
-                        <div className="text-2xl mb-2">{category.icon}</div>
-                        <p className="text-sm font-medium">{category.name}</p>
-                      </CardContent>
-                    </Card>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-            </Carousel>
-          </div>
-
-          {/* Filtros con estilo redondeado */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Filtros</h3>
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {filterOptions.map((filter) => (
-                <Button
-                  key={filter}
-                  variant={selectedFilter === filter ? "default" : "outline"}
-                  onClick={() => setSelectedFilter(filter)}
-                  className="rounded-full whitespace-nowrap"
-                >
-                  {filter}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {/* Planes por categoría */}
-          <div className="space-y-6">
-            {["Espiritual", "Emocional", "Familia"].map((categoryName) => (
-              <div key={categoryName}>
-                <h3 className="text-lg font-semibold mb-4">{categoryName}</h3>
-                <Carousel className="w-full" opts={{ loop: false }}>
-                  <CarouselContent>
-                    {allPlans
-                      .filter(plan => plan.category === categoryName)
-                      .map((plan, index, filteredPlans) => (
-                        <CarouselItem 
-                          key={plan.id} 
-                          className={`${
-                            index === filteredPlans.length - 1 
-                              ? 'basis-4/5 md:basis-1/2 lg:basis-1/3' 
-                              : 'basis-4/5 md:basis-1/2 lg:basis-1/3'
-                          }`}
-                        >
-                          <Card className="hover:shadow-md transition-shadow rounded-2xl">
-                            <CardContent className="p-4">
-                              <div className="flex gap-3">
-                                <img 
-                                  src={plan.image} 
-                                  alt={plan.title}
-                                  className="w-16 h-16 object-cover rounded-xl bg-gradient-to-br from-biblical-gold-light to-biblical-orange-light"
-                                />
-                                <div className="flex-1 space-y-2">
-                                  <h4 className="font-semibold text-sm">{plan.title}</h4>
-                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                    <Clock className="h-3 w-3" />
-                                    {plan.duration}
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    {renderStars(plan.rating)}
-                                    <span className="text-xs text-muted-foreground ml-1">
-                                      {plan.rating}
-                                    </span>
-                                  </div>
-                                  <Button size="sm" className="w-full rounded-full">
-                                    <Play className="h-3 w-3 mr-1" />
-                                    Iniciar
-                                  </Button>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </CarouselItem>
-                      ))}
-                  </CarouselContent>
-                </Carousel>
-              </div>
+          
+          {/* Pestañas principales con estilo redondeado */}
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {tabs.map((tab) => (
+              <Button
+                key={tab.id}
+                variant={selectedTab === tab.id ? "default" : "outline"}
+                onClick={() => setSelectedTab(tab.id)}
+                className="rounded-full whitespace-nowrap"
+                size={isScrolled ? "sm" : "default"}
+              >
+                {tab.label}
+              </Button>
             ))}
           </div>
         </div>
-      )}
+      </header>
 
-      {selectedTab === "my" && (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">Tus planes aparecerán aquí</p>
-        </div>
-      )}
+      {/* Contenido con padding superior para el header fijo */}
+      <div className="pt-32 p-4">
+        {selectedTab === "find" && (
+          <div className="space-y-6">
+            {/* Slider de planes principales */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Planes Destacados</h3>
+              <Carousel className="w-full" opts={{ loop: false }}>
+                <CarouselContent>
+                  {allPlans.slice(0, 3).map((plan, index) => (
+                    <CarouselItem 
+                      key={plan.id} 
+                      className={`${
+                        index === allPlans.slice(0, 3).length - 1 
+                          ? 'basis-4/5 md:basis-1/2 lg:basis-1/3' 
+                          : 'basis-4/5 md:basis-1/2 lg:basis-1/3'
+                      }`}
+                    >
+                      <Card className="hover:shadow-md transition-shadow rounded-2xl">
+                        <CardContent className="p-4">
+                          <img 
+                            src={plan.image} 
+                            alt={plan.title}
+                            className="w-full h-32 object-cover rounded-xl bg-gradient-to-br from-biblical-purple-light to-biblical-blue-light mb-3"
+                          />
+                          <p className="text-sm text-muted-foreground text-center">
+                            {plan.description}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+              </Carousel>
+            </div>
 
-      {selectedTab === "saved" && (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">Planes guardados aparecerán aquí</p>
-        </div>
-      )}
+            {/* Slider de categorías */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Categorías</h3>
+              <Carousel className="w-full" opts={{ loop: false }}>
+                <CarouselContent>
+                  {categories.map((category, index) => (
+                    <CarouselItem 
+                      key={category.name} 
+                      className={`${
+                        index === categories.length - 1 
+                          ? 'basis-1/2 md:basis-1/3 lg:basis-1/4' 
+                          : 'basis-1/2 md:basis-1/3 lg:basis-1/4'
+                      }`}
+                    >
+                      <Card className="hover:shadow-md transition-shadow cursor-pointer rounded-2xl">
+                        <CardContent className="p-4 text-center">
+                          <div className="text-2xl mb-2">{category.icon}</div>
+                          <p className="text-sm font-medium">{category.name}</p>
+                        </CardContent>
+                      </Card>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+              </Carousel>
+            </div>
 
-      {selectedTab === "completed" && (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">Planes completados aparecerán aquí</p>
-        </div>
-      )}
+            {/* Filtros con estilo redondeado */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Filtros</h3>
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {filterOptions.map((filter) => (
+                  <Button
+                    key={filter}
+                    variant={selectedFilter === filter ? "default" : "outline"}
+                    onClick={() => setSelectedFilter(filter)}
+                    className="rounded-full whitespace-nowrap"
+                  >
+                    {filter}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Planes por categoría */}
+            <div className="space-y-6">
+              {["Espiritual", "Emocional", "Familia"].map((categoryName) => (
+                <div key={categoryName}>
+                  <h3 className="text-lg font-semibold mb-4">{categoryName}</h3>
+                  <Carousel className="w-full" opts={{ loop: false }}>
+                    <CarouselContent>
+                      {allPlans
+                        .filter(plan => plan.category === categoryName)
+                        .map((plan, index, filteredPlans) => (
+                          <CarouselItem 
+                            key={plan.id} 
+                            className={`${
+                              index === filteredPlans.length - 1 
+                                ? 'basis-4/5 md:basis-1/2 lg:basis-1/3' 
+                                : 'basis-4/5 md:basis-1/2 lg:basis-1/3'
+                            }`}
+                          >
+                            <Card className="hover:shadow-md transition-shadow rounded-2xl">
+                              <CardContent className="p-4">
+                                <div className="flex gap-3">
+                                  <img 
+                                    src={plan.image} 
+                                    alt={plan.title}
+                                    className="w-16 h-16 object-cover rounded-xl bg-gradient-to-br from-biblical-gold-light to-biblical-orange-light"
+                                  />
+                                  <div className="flex-1 space-y-2">
+                                    <h4 className="font-semibold text-sm">{plan.title}</h4>
+                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                      <Clock className="h-3 w-3" />
+                                      {plan.duration}
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      {renderStars(plan.rating)}
+                                      <span className="text-xs text-muted-foreground ml-1">
+                                        {plan.rating}
+                                      </span>
+                                    </div>
+                                    <Button size="sm" className="w-full rounded-full">
+                                      <Play className="h-3 w-3 mr-1" />
+                                      Iniciar
+                                    </Button>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </CarouselItem>
+                        ))}
+                    </CarouselContent>
+                  </Carousel>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {selectedTab === "my" && (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Tus planes aparecerán aquí</p>
+          </div>
+        )}
+
+        {selectedTab === "saved" && (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Planes guardados aparecerán aquí</p>
+          </div>
+        )}
+
+        {selectedTab === "completed" && (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Planes completados aparecerán aquí</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -67,6 +67,18 @@ const settingsOptions = [
 ];
 
 export const EnhancedOptionsSection = () => {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Hook para detectar scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const userProfile = {
     name: "María González",
     avatar: "/placeholder.svg",
@@ -90,114 +102,131 @@ export const EnhancedOptionsSection = () => {
   };
 
   return (
-    <div className="p-4 space-y-6">
-      {/* Perfil del usuario */}
-      <Card className="bg-gradient-to-br from-biblical-purple-light to-biblical-blue-light">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Avatar className="h-16 w-16">
-                <AvatarImage src={userProfile.avatar} />
-                <AvatarFallback className="bg-biblical-gold text-black text-lg">
-                  {getUserInitials(userProfile.name)}
-                </AvatarFallback>
-              </Avatar>
+    <div>
+      {/* Header específico para opciones */}
+      <header className={`fixed top-0 left-0 right-0 z-50 bg-background border-b border-border transition-all duration-300 ${
+        isScrolled ? 'py-2' : 'py-4'
+      }`}>
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="flex items-center gap-3">
+            <Settings className={`text-biblical-blue ${isScrolled ? 'h-5 w-5' : 'h-6 w-6'}`} />
+            <h1 className={`font-bold ${isScrolled ? 'text-lg' : 'text-xl'}`}>
+              Opciones
+            </h1>
+          </div>
+        </div>
+      </header>
+
+      {/* Contenido con padding superior para el header fijo */}
+      <div className="pt-20 p-4 space-y-6">
+        {/* Perfil del usuario */}
+        <Card className="bg-gradient-to-br from-biblical-purple-light to-biblical-blue-light">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={userProfile.avatar} />
+                  <AvatarFallback className="bg-biblical-gold text-black text-lg">
+                    {getUserInitials(userProfile.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <CardTitle className="text-xl">{userProfile.name}</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Miembro desde enero 2024
+                  </p>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="bg-biblical-orange text-white border-biblical-orange hover:bg-biblical-orange/90"
+              >
+                <Heart className="h-4 w-4 mr-2" />
+                Donar
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <CardTitle className="text-xl">{userProfile.name}</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Miembro desde enero 2024
-                </p>
+                <div className="text-2xl font-bold text-biblical-purple">{userProfile.streak}</div>
+                <div className="text-xs text-muted-foreground">Días de racha</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-biblical-blue">{userProfile.totalReadingTime}</div>
+                <div className="text-xs text-muted-foreground">Tiempo total</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-biblical-green">{userProfile.completedPlans}</div>
+                <div className="text-xs text-muted-foreground">Planes completados</div>
               </div>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="bg-biblical-orange text-white border-biblical-orange hover:bg-biblical-orange/90"
-            >
-              <Heart className="h-4 w-4 mr-2" />
-              Donar
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <div className="text-2xl font-bold text-biblical-purple">{userProfile.streak}</div>
-              <div className="text-xs text-muted-foreground">Días de racha</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-biblical-blue">{userProfile.totalReadingTime}</div>
-              <div className="text-xs text-muted-foreground">Tiempo total</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-biblical-green">{userProfile.completedPlans}</div>
-              <div className="text-xs text-muted-foreground">Planes completados</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Actividad del usuario */}
-      <div>
-        <div className="flex items-center gap-2 mb-4">
-          <TrendingUp className="h-5 w-5 text-biblical-purple" />
-          <h3 className="text-lg font-semibold">Mi Actividad</h3>
+        {/* Actividad del usuario */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp className="h-5 w-5 text-biblical-purple" />
+            <h3 className="text-lg font-semibold">Mi Actividad</h3>
+          </div>
+          <div className="space-y-3">
+            {userActivities.map((activity, index) => {
+              const IconComponent = getActivityIcon(activity.type);
+              return (
+                <Card key={index} className="hover:shadow-md transition-shadow cursor-pointer">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-full bg-biblical-purple-light">
+                          <IconComponent className="h-4 w-4 text-biblical-purple" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-sm">{activity.title}</h4>
+                          <p className="text-xs text-muted-foreground">{activity.description}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        {activity.count && (
+                          <Badge variant="secondary" className="text-xs mb-1">
+                            {activity.count}
+                          </Badge>
+                        )}
+                        <div className="text-xs text-muted-foreground">{activity.date}</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
         </div>
-        <div className="space-y-3">
-          {userActivities.map((activity, index) => {
-            const IconComponent = getActivityIcon(activity.type);
-            return (
-              <Card key={index} className="hover:shadow-md transition-shadow cursor-pointer">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
+
+        {/* Configuraciones */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <Settings className="h-5 w-5 text-biblical-blue" />
+            <h3 className="text-lg font-semibold">Configuración</h3>
+          </div>
+          <div className="space-y-2">
+            {settingsOptions.map((option, index) => {
+              const IconComponent = option.icon;
+              return (
+                <Card key={index} className="hover:shadow-md transition-shadow cursor-pointer">
+                  <CardContent className="p-4">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-full bg-biblical-purple-light">
-                        <IconComponent className="h-4 w-4 text-biblical-purple" />
-                      </div>
+                      <IconComponent className="h-5 w-5 text-biblical-blue" />
                       <div>
-                        <h4 className="font-medium text-sm">{activity.title}</h4>
-                        <p className="text-xs text-muted-foreground">{activity.description}</p>
+                        <h4 className="font-medium text-sm">{option.title}</h4>
+                        <p className="text-xs text-muted-foreground">{option.description}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      {activity.count && (
-                        <Badge variant="secondary" className="text-xs mb-1">
-                          {activity.count}
-                        </Badge>
-                      )}
-                      <div className="text-xs text-muted-foreground">{activity.date}</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Configuraciones */}
-      <div>
-        <div className="flex items-center gap-2 mb-4">
-          <Settings className="h-5 w-5 text-biblical-blue" />
-          <h3 className="text-lg font-semibold">Configuración</h3>
-        </div>
-        <div className="space-y-2">
-          {settingsOptions.map((option, index) => {
-            const IconComponent = option.icon;
-            return (
-              <Card key={index} className="hover:shadow-md transition-shadow cursor-pointer">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <IconComponent className="h-5 w-5 text-biblical-blue" />
-                    <div>
-                      <h4 className="font-medium text-sm">{option.title}</h4>
-                      <p className="text-xs text-muted-foreground">{option.description}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

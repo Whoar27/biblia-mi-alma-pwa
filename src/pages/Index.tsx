@@ -1,12 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Home, Book, Calendar, Search, Settings, AlertCircle } from "lucide-react";
+import { Home, Book, Calendar, Search, Settings, AlertCircle, Bell, Flame } from "lucide-react";
 import { BooksList } from "@/components/BooksList";
-import { ChapterReader } from "@/components/ChapterReader";
+import { ChapterReader, useTheme } from "@/components/ChapterReader";
 import { FavoriteVerses } from "@/components/FavoriteVerses";
 import { VerseExplanation } from "@/components/VerseExplanation";
 import { BibleVersionSelector } from "@/components/BibleVersionSelector";
-import { PageHeader } from "@/components/PageHeader";
 import { EnhancedBooksList } from "@/components/EnhancedBooksList";
 import { EnhancedBibleVersionSelector } from "@/components/EnhancedBibleVersionSelector";
 import { MyPlans } from "@/components/MyPlans";
@@ -16,20 +15,47 @@ import { EnhancedSearchSection } from "@/components/EnhancedSearchSection";
 import { EnhancedOptionsSection } from "@/components/EnhancedOptionsSection";
 import { DailyVerse } from "@/components/DailyVerse";
 import { useLastRead } from "@/hooks/useLastRead";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Index = () => {
-  const [currentView, setCurrentView] = useState<'home' | 'books' | 'chapter' | 'search' | 'plans' | 'options' | 'explanation' | 'versions' | 'profile' | 'stats' | 'enhanced-books' | 'enhanced-versions'>('home');
+  const [currentView, setCurrentView] = useState<'index' | 'enhanced-books' | 'enhanced-plans' | 'enhanced-search' | 'enhanced-options' | 'chapter'>('index');
   const [selectedBook, setSelectedBook] = useState<string>('');
   const [selectedChapter, setSelectedChapter] = useState<number>(1);
   const [currentVerseForExplanation, setCurrentVerseForExplanation] = useState<any>(null);
   const [selectedBibleVersion, setSelectedBibleVersion] = useState<string>('RVR1960');
+  const [isScrolled, setIsScrolled] = useState(false);
   const { lastRead, updateLastRead } = useLastRead();
+  const [initialTestament, setInitialTestament] = useState<'old' | 'new' | undefined>(undefined);
+
+  // Hook para detectar scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Hook para escuchar cambios de versión de Biblia
+  useEffect(() => {
+    const handleVersionChange = (event: CustomEvent) => {
+      setSelectedBibleVersion(event.detail);
+    };
+
+    window.addEventListener('bibleVersionChanged', handleVersionChange as EventListener);
+    return () => window.removeEventListener('bibleVersionChanged', handleVersionChange as EventListener);
+  }, []);
 
   // Mock user profile
   const userProfile = {
     name: "María González",
     avatar: "/placeholder.svg",
     streak: 15
+  };
+
+  const getUserInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
   const handleBookSelect = (bookName: string) => {
@@ -42,17 +68,23 @@ const Index = () => {
   const handleChapterSelect = (bookName: string, chapter: number) => {
     setSelectedBook(bookName);
     setSelectedChapter(chapter);
-    updateLastRead(bookName, chapter);
     setCurrentView('chapter');
+    updateLastRead(bookName, chapter);
+  };
+
+  const handleBookChange = (bookName: string, chapter: number) => {
+    setSelectedBook(bookName);
+    setSelectedChapter(chapter);
+    updateLastRead(bookName, chapter);
   };
 
   const handleExplainVerse = (verse: any) => {
     setCurrentVerseForExplanation(verse);
-    setCurrentView('explanation');
+    handleViewChange('index');
   };
 
   const handleNavigateToVerse = (reference: string) => {
-    setCurrentView('home');
+    handleViewChange('index');
   };
 
   const handleVersionChange = (version: string) => {
@@ -60,35 +92,30 @@ const Index = () => {
   };
 
   const handleBackToBooks = () => {
+    handleViewChange('enhanced-books');
+  };
+
+  const handleNavigateToTestament = (testament: 'old' | 'new') => {
     setCurrentView('enhanced-books');
+    setInitialTestament(testament);
+    console.log(`Navegando al ${testament === 'old' ? 'Antiguo' : 'Nuevo'} Testamento`);
+  };
+
+  const handleViewChange = (view: typeof currentView) => {
+    setCurrentView(view);
+    setInitialTestament(undefined); // Limpiar testamento inicial
   };
 
   const navigationItems = [
-    { id: 'home', icon: Home, label: 'Inicio' },
-    { id: 'books', icon: Book, label: 'Biblia' },
-    { id: 'plans', icon: Calendar, label: 'Planes' },
-    { id: 'search', icon: Search, label: 'Buscar' },
-    { id: 'options', icon: Settings, label: 'Opciones' }
+    { id: 'index', icon: Home, label: 'Inicio' },
+    { id: 'enhanced-books', icon: Book, label: 'Biblia' },
+    { id: 'enhanced-plans', icon: Calendar, label: 'Planes' },
+    { id: 'enhanced-search', icon: Search, label: 'Buscar' },
+    { id: 'enhanced-options', icon: Settings, label: 'Opciones' }
   ];
-
-  const getPageForHeader = (): 'home' | 'bible' | 'plans' | 'search' | 'options' => {
-    if (currentView === 'chapter' || currentView === 'enhanced-books' || currentView === 'enhanced-versions') {
-      return 'bible';
-    }
-    if (currentView === 'profile' || currentView === 'stats' || currentView === 'explanation' || currentView === 'versions') {
-      return 'home';
-    }
-    return currentView as 'home' | 'bible' | 'plans' | 'search' | 'options';
-  };
 
   const renderContent = () => {
     switch (currentView) {
-      case 'books':
-        if (lastRead) {
-          handleChapterSelect(lastRead.book, lastRead.chapter);
-          return null;
-        }
-        return <BooksList onBookSelect={handleBookSelect} />;
       case 'enhanced-books':
         return (
           <EnhancedBooksList 
@@ -96,14 +123,7 @@ const Index = () => {
             onChapterSelect={handleChapterSelect}
             currentBook={selectedBook}
             currentChapter={selectedChapter}
-          />
-        );
-      case 'enhanced-versions':
-        return (
-          <EnhancedBibleVersionSelector 
-            selectedVersion={selectedBibleVersion}
-            onVersionChange={handleVersionChange}
-            onBack={() => setCurrentView('books')}
+            initialTestament={initialTestament}
           />
         );
       case 'chapter':
@@ -111,48 +131,23 @@ const Index = () => {
           <ChapterReader 
             book={selectedBook} 
             chapter={selectedChapter}
+            selectedVersion={selectedBibleVersion}
             onChapterChange={(chapter) => {
               setSelectedChapter(chapter);
               updateLastRead(selectedBook, chapter);
             }}
+            onBookChange={handleBookChange}
             onBackToBooks={handleBackToBooks}
+            onNavigateToTestament={handleNavigateToTestament}
           />
         );
-      case 'search':
-        return <EnhancedSearchSection />;
-      case 'plans':
+      case 'enhanced-plans':
         return <EnhancedPlansSection />;
-      case 'options':
+      case 'enhanced-search':
+        return <EnhancedSearchSection />;
+      case 'enhanced-options':
         return <EnhancedOptionsSection />;
-      case 'explanation':
-        return (
-          <VerseExplanation 
-            verse={currentVerseForExplanation}
-            onBack={() => setCurrentView('home')}
-            onNavigateToVerse={handleNavigateToVerse}
-          />
-        );
-      case 'versions':
-        return (
-          <BibleVersionSelector 
-            selectedVersion={selectedBibleVersion}
-            onVersionChange={handleVersionChange}
-          />
-        );
-      case 'profile':
-        return (
-          <div className="p-4">
-            <h2 className="text-2xl font-bold mb-4">Mi Perfil</h2>
-            <p>Detalles del perfil en desarrollo...</p>
-          </div>
-        );
-      case 'stats':
-        return (
-          <div className="p-4">
-            <h2 className="text-2xl font-bold mb-4">Mis Estadísticas</h2>
-            <p>Estadísticas detalladas en desarrollo...</p>
-          </div>
-        );
+      case 'index':
       default:
         return (
           <div className="p-4">
@@ -166,12 +161,12 @@ const Index = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto mt-8">
               <div 
-                className="bg-gradient-to-br from-biblical-purple-light to-biblical-blue-light p-6 rounded-full border shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
+                className="bg-gradient-to-br from-biblical-purple-light to-biblical-blue-light p-6 rounded-2xl border shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
                 onClick={() => {
                   if (lastRead) {
                     handleChapterSelect(lastRead.book, lastRead.chapter);
                   } else {
-                    setCurrentView('books');
+                    setCurrentView('enhanced-books');
                   }
                 }}
               >
@@ -188,8 +183,8 @@ const Index = () => {
               </div>
               
               <div 
-                className="bg-gradient-to-br from-biblical-gold-light to-biblical-orange-light p-6 rounded-full border shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
-                onClick={() => setCurrentView('search')}
+                className="bg-gradient-to-br from-biblical-gold-light to-biblical-orange-light p-6 rounded-2xl border shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
+                onClick={() => setCurrentView('enhanced-search')}
               >
                 <Search className="h-12 w-12 mb-3 text-biblical-orange" />
                 <h3 className="font-semibold text-lg mb-2">Buscar Versículos</h3>
@@ -201,59 +196,100 @@ const Index = () => {
     }
   };
 
-  const renderBottomNavigation = () => (
-    <nav className="fixed bottom-0 left-0 right-0 bg-background border-t border-border">
-      <div className="flex justify-around items-center py-2 px-4 max-w-md mx-auto">
-        {navigationItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = currentView === item.id;
-          
-          return (
-            <Button
-              key={item.id}
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                if (item.id === 'books') {
-                  if (lastRead) {
-                    handleChapterSelect(lastRead.book, lastRead.chapter);
+  const renderBottomNavigation = () => {
+    // Solo usar el tema cuando estamos en la sección de Biblia
+    const isInBibleSection = currentView === 'chapter' || currentView === 'enhanced-books';
+    
+    return (
+      <nav className={`fixed bottom-0 left-0 right-0 border-t transition-all duration-300 ${
+        isInBibleSection 
+          ? 'bg-background border-border' 
+          : 'bg-background border-border'
+      }`}>
+        <div className="flex justify-around items-center py-2 px-4 max-w-md mx-auto">
+          {navigationItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = currentView === item.id;
+            
+            return (
+              <Button
+                key={item.id}
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  if (item.id === 'enhanced-books') {
+                    if (lastRead) {
+                      handleChapterSelect(lastRead.book, lastRead.chapter);
+                    } else {
+                      setCurrentView('enhanced-books');
+                    }
+                  } else if (item.id === 'index') {
+                    setCurrentView('index');
                   } else {
-                    setCurrentView('enhanced-books');
+                    setCurrentView(item.id as any);
                   }
-                } else {
-                  setCurrentView(item.id as any);
-                }
-              }}
-              className={`flex flex-col items-center gap-1 h-auto py-2 px-3 rounded-full ${
-                isActive 
-                  ? 'text-biblical-purple bg-biblical-purple-light' 
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <Icon className="h-5 w-5" />
-              <span className="text-xs font-medium">{item.label}</span>
-            </Button>
-          );
-        })}
-      </div>
-    </nav>
-  );
+                }}
+                className={`flex flex-col items-center gap-1 h-auto py-2 px-3 rounded-2xl transition-all duration-200 ${
+                  isActive 
+                    ? 'text-biblical-purple bg-biblical-purple-light' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Icon className="h-5 w-5" />
+                <span className="text-xs font-medium">{item.label}</span>
+              </Button>
+            );
+          })}
+        </div>
+      </nav>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <PageHeader 
-        page={getPageForHeader()}
-        onProfileClick={() => setCurrentView('profile')}
-        onStatsClick={() => setCurrentView('stats')}
-        userProfile={userProfile}
-        currentBook={selectedBook}
-        currentChapter={selectedChapter}
-        selectedVersion={selectedBibleVersion}
-        onBookChapterClick={() => setCurrentView('enhanced-books')}
-        onVersionClick={() => setCurrentView('enhanced-versions')}
-      />
-      
-      <main className="max-w-4xl mx-auto min-h-[calc(100vh-140px)] pt-20">
+      {/* Header específico para la página de inicio */}
+      {currentView === 'index' && (
+        <header className={`fixed top-0 left-0 right-0 z-50 bg-background border-b border-border transition-all duration-300 ${
+          isScrolled ? 'py-2' : 'py-4'
+        }`}>
+          <div className="max-w-4xl mx-auto px-4">
+            <div className="flex items-center justify-between">
+              {/* Lado izquierdo - Hoy */}
+              <div className="flex items-center gap-2">
+                <h1 className={`font-bold ${isScrolled ? 'text-lg' : 'text-xl'}`}>
+                  Hoy
+                </h1>
+              </div>
+              
+              {/* Lado derecho - Iconos */}
+              <div className="flex items-center gap-3">
+                {/* Icono de racha */}
+                <div className="flex items-center gap-1 bg-biblical-orange-light px-2 py-1 rounded-full">
+                  <Flame className={`text-biblical-orange ${isScrolled ? 'h-4 w-4' : 'h-5 w-5'}`} />
+                  <span className={`font-semibold text-biblical-orange ${isScrolled ? 'text-sm' : 'text-base'}`}>
+                    {userProfile.streak}
+                  </span>
+                </div>
+                
+                {/* Icono de notificaciones */}
+                <Button variant="ghost" size="sm" className="p-2">
+                  <Bell className={`text-muted-foreground ${isScrolled ? 'h-5 w-5' : 'h-6 w-6'}`} />
+                </Button>
+                
+                {/* Avatar del usuario */}
+                <Avatar className={`${isScrolled ? 'h-8 w-8' : 'h-10 w-10'}`}>
+                  <AvatarImage src={userProfile.avatar} />
+                  <AvatarFallback className="bg-biblical-purple text-white text-sm">
+                    {getUserInitials(userProfile.name)}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+            </div>
+          </div>
+        </header>
+      )}
+
+      <main className={`max-w-4xl mx-auto min-h-[calc(100vh-140px)] ${currentView === 'index' ? 'pt-20' : 'pt-4'}`}>
         {renderContent()}
       </main>
       {renderBottomNavigation()}

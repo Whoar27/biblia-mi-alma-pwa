@@ -1,17 +1,18 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, BookOpen, AlertCircle } from "lucide-react";
+import React from "react";
 
 interface EnhancedBooksListProps {
   onBookSelect: (bookName: string) => void;
   onChapterSelect: (bookName: string, chapter: number) => void;
   currentBook?: string;
   currentChapter?: number;
+  initialTestament?: 'old' | 'new';
 }
 
 const oldTestamentBooks = [
@@ -90,9 +91,18 @@ export const EnhancedBooksList = ({
   onBookSelect, 
   onChapterSelect, 
   currentBook, 
-  currentChapter 
+  currentChapter, 
+  initialTestament
 }: EnhancedBooksListProps) => {
   const [openBooks, setOpenBooks] = useState<Set<string>>(new Set());
+  const [activeTestament, setActiveTestament] = useState<'old' | 'new'>(initialTestament || 'old');
+
+  // Cambiar al testamento correcto cuando se recibe initialTestament
+  useEffect(() => {
+    if (initialTestament) {
+      setActiveTestament(initialTestament);
+    }
+  }, [initialTestament]);
 
   const toggleBook = (bookName: string) => {
     const newOpenBooks = new Set(openBooks);
@@ -177,7 +187,7 @@ export const EnhancedBooksList = ({
         <h2 className="text-xl font-bold">Libros de la Biblia</h2>
       </div>
       
-      <Tabs defaultValue="old" className="w-full">
+      <Tabs value={activeTestament} onValueChange={(value) => setActiveTestament(value as 'old' | 'new')} className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-6">
           <TabsTrigger value="old" className="text-biblical-blue">Antiguo Testamento</TabsTrigger>
           <TabsTrigger value="new" className="text-biblical-purple">Nuevo Testamento</TabsTrigger>
