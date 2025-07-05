@@ -16,7 +16,7 @@ import './index.css'
 (function() {
   try {
     const theme = localStorage.getItem('theme-global') || 'light';
-    const bodyClass = theme === 'light' ? 'tres' : theme;
+    const bodyClass = theme === 'light' ? '' : theme;
     document.body.className = bodyClass;
   } catch (e) {}
 })();
