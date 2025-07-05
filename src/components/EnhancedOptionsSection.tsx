@@ -18,6 +18,7 @@ import {
   HelpCircle,
   Heart
 } from "lucide-react";
+import { setBodyThemeFromGlobal } from '../lib/theme';
 
 interface UserActivity {
   type: 'saved' | 'comment' | 'highlight' | 'reading';
@@ -69,7 +70,6 @@ const settingsOptions = [
 const THEME_OPTIONS = [
   { value: 'light', label: 'Claro' },
   { value: 'dark', label: 'Oscuro' },
-  { value: 'sepia', label: 'Sepia' },
 ];
 
 export const EnhancedOptionsSection = () => {
@@ -86,8 +86,14 @@ export const EnhancedOptionsSection = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem('theme-global', selectedTheme);
+    localStorage.removeItem('theme-lectura');
+    setBodyThemeFromGlobal();
+  }, [selectedTheme]);
+
   const userProfile = {
-    name: "María González",
+    name: "Willian Hoyos",
     avatar: "/placeholder.svg",
     streak: 15,
     totalReadingTime: "24h 30min",

@@ -189,8 +189,15 @@ export const EnhancedBooksList = ({
       
       <Tabs value={activeTestament} onValueChange={(value) => setActiveTestament(value as 'old' | 'new')} className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="old" className="text-biblical-blue">Antiguo Testamento</TabsTrigger>
-          <TabsTrigger value="new" className="text-biblical-purple">Nuevo Testamento</TabsTrigger>
+          {['old', 'new'].map((testament) => (
+            <TabsTrigger
+              key={testament}
+              value={testament}
+              className={testament === 'old' ? 'text-biblical-blue' : 'text-biblical-purple'}
+            >
+              {testament === 'old' ? 'Antiguo Testamento' : 'Nuevo Testamento'}
+            </TabsTrigger>
+          ))}
         </TabsList>
         
         <TabsContent value="old">

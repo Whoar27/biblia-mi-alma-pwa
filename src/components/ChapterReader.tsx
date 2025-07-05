@@ -20,6 +20,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { setBodyTheme, setBodyThemeFromGlobal } from '../lib/theme';
+import { BibleVersionsPanel, BibleVersion } from "./BibleVersionsPanel";
 
 interface ChapterReaderProps {
   book: string;
@@ -287,21 +289,6 @@ const getThemeStyles = (theme: string) => {
       selectedBadgeBg: 'bg-gray-500',
       selectedBadgeText: 'text-white',
       selectedBadgeBorder: 'border-gray-500'
-    },
-    sepia: {
-      background: 'bg-amber-50',
-      text: 'text-amber-900',
-      border: 'border-amber-200',
-      hover: 'hover:bg-amber-100',
-      buttonBg: 'bg-amber-100',
-      buttonText: 'text-amber-900',
-      buttonBorder: 'border-amber-300',
-      selectedBg: 'bg-amber-200',
-      selectedBorder: 'border border-amber-400',
-      selectedText: 'text-amber-900',
-      selectedBadgeBg: 'bg-amber-700',
-      selectedBadgeText: 'text-white',
-      selectedBadgeBorder: 'border-amber-700'
     }
   };
   return themes[theme as keyof typeof themes] || themes['light'];
@@ -329,17 +316,14 @@ export const ChapterReader = ({ book, chapter, onChapterChange, onBackToBooks, s
     return localStorage.getItem('theme-lectura') || localStorage.getItem('theme-global') || 'light';
   };
 
-  const getStoredVersion = () => {
-    return localStorage.getItem('biblia-version') || 'RVR1960';
-  };
-
   const [verses, setVerses] = useState<{ verse: number; text: string }[]>([]);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [fontSize, setFontSize] = useState(getStoredFontSize);
   const [selectedVerses, setSelectedVerses] = useState<Set<number>>(new Set());
+  const [highlightedVerses, setHighlightedVerses] = useState<Map<number, string>>(new Map());
   const [showNavigation, setShowNavigation] = useState(true);
   const [showFontSizeMenu, setShowFontSizeMenu] = useState(false);
-  const [showVersionMenu, setShowVersionMenu] = useState(false);
+  const [showBibleVersionsPanel, setShowBibleVersionsPanel] = useState(false);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -360,8 +344,68 @@ export const ChapterReader = ({ book, chapter, onChapterChange, onBackToBooks, s
   const themeBgHex = {
     light: '#fff8e1',
     dark: '#18181b',
-    sepia: '#fff8e1',
   };
+
+  // Ejemplo de versiones
+  const bibleVersions: BibleVersion[] = [
+    {
+      id: "1",
+      code: "RVC",
+      name: "Reina Valera Contemporánea",
+      publisher: "United Bible Societies",
+      year: "2011",
+      coverUrl: undefined,
+      downloaded: true,
+      selected: false
+    },
+    {
+      id: "2",
+      code: "TLA",
+      name: "Traducción en Lenguaje Actual",
+      publisher: "United Bible Societies",
+      year: "2000",
+      coverUrl: undefined,
+      downloaded: true,
+      selected: false
+    },
+    {
+      id: "3",
+      code: "RVR1960",
+      name: "Biblia Reina Valera 1960",
+      publisher: "United Bible Societies",
+      year: "1960",
+      coverUrl: undefined,
+      downloaded: true,
+      selected: false
+    },
+    {
+      id: "4",
+      code: "TLAI",
+      name: "Traducción en Lenguaje Actual Internacional",
+      publisher: "United Bible Societies",
+      year: "2015",
+      coverUrl: undefined,
+      downloaded: false,
+      selected: false
+    },
+    {
+      id: "5",
+      code: "BDO1573",
+      name: "Biblia del Oso 1573",
+      publisher: "United Bible Societies",
+      year: "1573",
+      coverUrl: undefined,
+      downloaded: false,
+      selected: false
+    }
+  ];
+
+  // Obtener el código de la versión seleccionada desde localStorage o default
+  const getStoredVersion = () => {
+    return localStorage.getItem('biblia-version') || 'RVR1960';
+  };
+
+  const [selectedVersionCode, setSelectedVersionCode] = useState(getStoredVersion());
 
   // Aplicar versión guardada al inicializar
   useEffect(() => {
@@ -398,6 +442,20 @@ export const ChapterReader = ({ book, chapter, onChapterChange, onBackToBooks, s
     return () => clearTimeout(timer);
   }, [chapter]);
 
+  useEffect(() => {
+    // Al entrar a la lectura
+    const lecturaTheme = localStorage.getItem('theme-lectura');
+    if (lecturaTheme) {
+      setBodyTheme(lecturaTheme);
+    } else {
+      setBodyThemeFromGlobal();
+    }
+    return () => {
+      // Al salir de la lectura
+      setBodyThemeFromGlobal();
+    };
+  }, []);
+
   const handleVerseClick = (verse: { verse: number; text: string }) => {
     const newSelectedVerses = new Set(selectedVerses);
     if (newSelectedVerses.has(verse.verse)) {
@@ -408,12 +466,21 @@ export const ChapterReader = ({ book, chapter, onChapterChange, onBackToBooks, s
     setSelectedVerses(newSelectedVerses);
   };
 
-  const handleHighlight = () => {
-    const count = selectedVerses.size;
-    toast({
-      title: count === 1 ? "Versículo resaltado" : `${count} versículos resaltados`,
-      description: count === 1 ? "El versículo ha sido resaltado" : `Los versículos han sido resaltados`
+  const handleHighlight = (color: string) => {
+    const newHighlightedVerses = new Map(highlightedVerses);
+    
+    selectedVerses.forEach(verseNumber => {
+      const currentColor = newHighlightedVerses.get(verseNumber);
+      if (currentColor === color) {
+        // Si ya tiene el mismo color, lo desresaltamos
+        newHighlightedVerses.delete(verseNumber);
+      } else {
+        // Si tiene otro color o no tiene color, aplicamos el nuevo
+        newHighlightedVerses.set(verseNumber, color);
+      }
     });
+    
+    setHighlightedVerses(newHighlightedVerses);
     setSelectedVerses(new Set());
   };
 
@@ -545,16 +612,18 @@ Compartido desde Biblia Mi Alma PWA`;
     showSubtleToast(`Tamaño: ${newSize}px`);
   };
 
-  const handleVersionChange = (newVersion: string) => {
-    localStorage.setItem('biblia-version', newVersion);
-    showSubtleToast(`Versión: ${newVersion}`);
-    // Emitir un evento personalizado para que el componente padre sepa del cambio
-    window.dispatchEvent(new CustomEvent('bibleVersionChanged', { detail: newVersion }));
+  const handleVersionChange = (newCode: string) => {
+    setSelectedVersionCode(newCode);
+    localStorage.setItem('biblia-version', newCode);
+    showSubtleToast(`Versión: ${newCode}`);
+    window.dispatchEvent(new CustomEvent('bibleVersionChanged', { detail: newCode }));
   };
 
   const handleThemeChange = (theme: string) => {
     setCurrentTheme(theme);
-    localStorage.setItem('theme-lectura', theme);
+    localStorage.setItem('theme-global', theme);
+    localStorage.removeItem('theme-lectura');
+    setBodyTheme(theme);
     showSubtleToast(`Tema: ${theme}`);
   };
 
@@ -602,12 +671,26 @@ Compartido desde Biblia Mi Alma PWA`;
           const verseKey = `${book}-${chapter}-${verse.verse}`;
           const isFavorite = favorites.has(verseKey);
           const isSelected = selectedVerses.has(verse.verse);
+          const highlightColor = highlightedVerses.get(verse.verse);
+          
+          // Clases de resaltado según el color
+          const getHighlightClass = (color: string) => {
+            switch (color) {
+              case 'yellow': return 'bg-yellow-200 dark:bg-yellow-400/30';
+              case 'green': return 'bg-green-300 dark:bg-green-600/30';
+              case 'blue': return 'bg-blue-300 dark:bg-blue-600/30';
+              case 'pink': return 'bg-pink-300 dark:bg-pink-600/30';
+              case 'orange': return 'bg-orange-300 dark:bg-orange-500/30';
+              default: return '';
+            }
+          };
           
           return (
             <div
               key={verse.verse}
               className={`flex gap-3 p-3 rounded-lg transition-all duration-200 ${
-                isSelected ? getThemeStyles(currentTheme).selectedBg : getThemeStyles(currentTheme).background
+                isSelected ? getThemeStyles(currentTheme).selectedBg : 
+                highlightColor ? getHighlightClass(highlightColor) : getThemeStyles(currentTheme).background
               }`}
             >
               <Badge
@@ -649,7 +732,7 @@ Compartido desde Biblia Mi Alma PWA`;
 
     // Crear notificación sutil en la parte inferior
     const toast = document.createElement('div');
-    toast.className = 'chapter-toast fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-lg text-sm z-50 transition-opacity duration-300';
+    toast.className = 'chapter-toast fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-lg text-sm z-50 transition-opacity duration-300';
     toast.textContent = message;
     document.body.appendChild(toast);
     
@@ -858,10 +941,10 @@ Compartido desde Biblia Mi Alma PWA`;
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowVersionMenu(true)}
-                  className={`rounded-l-none rounded-r-full h-8 px-3 hover:${getThemeStyles(currentTheme).hover} ${getThemeStyles(currentTheme).buttonBg} ${getThemeStyles(currentTheme).text} ${getThemeStyles(currentTheme).buttonBorder}`}
+                  onClick={() => setShowBibleVersionsPanel(true)}
+                  className={`rounded-l-none rounded-r-full h-8 px-3 hover:${getThemeStyles(currentTheme).hover} ${getThemeStyles(currentTheme).buttonBg} ${getThemeStyles(currentTheme).text} ${getThemeStyles(currentTheme).buttonBorder} tracking-widest font-bold`}
                 >
-                  {selectedVersion || 'RVR1960'}
+                  {selectedVersionCode.toUpperCase()}
                 </Button>
               </div>
               
@@ -1003,40 +1086,18 @@ Compartido desde Biblia Mi Alma PWA`;
           </DialogContent>
         </Dialog>
 
-        {/* Diálogo de versión de Biblia */}
-        <Dialog open={showVersionMenu} onOpenChange={setShowVersionMenu}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Versión de Biblia</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="grid gap-2">
-                {['RVR1960', 'NVI', 'RVA2015', 'LBLA', 'DHH', 'TLA'].map((version) => {
-                  const isSelected = selectedVersion === version;
-                  
-                  return (
-                    <Button
-                      key={version}
-                      variant={isSelected ? "default" : "outline"}
-                      onClick={() => {
-                        handleVersionChange(version);
-                        setShowVersionMenu(false);
-                      }}
-                      className="justify-start"
-                    >
-                      <div className="flex items-center gap-3 w-full">
-                        <span className="flex-1 text-left">{version}</span>
-                        {isSelected && (
-                          <div className="w-2 h-2 rounded-full bg-current" />
-                        )}
-                      </div>
-                    </Button>
-                  );
-                })}
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Panel de versiones tipo bottom sheet */}
+        <BibleVersionsPanel
+          open={showBibleVersionsPanel}
+          onClose={() => setShowBibleVersionsPanel(false)}
+          versions={bibleVersions.map(v => ({ ...v, selected: v.code === selectedVersionCode }))}
+          onSelect={(code) => {
+            setShowBibleVersionsPanel(false);
+            handleVersionChange(code);
+          }}
+          onAdd={() => {}}
+          onSettings={() => {}}
+        />
 
         {/* Diálogo de temas */}
         <Dialog open={showThemeMenu} onOpenChange={setShowThemeMenu}>
@@ -1046,7 +1107,7 @@ Compartido desde Biblia Mi Alma PWA`;
             </DialogHeader>
             <div className="space-y-4">
               <div className="grid gap-2">
-                {['light', 'dark', 'sepia'].map((theme) => {
+                {['light', 'dark'].map((theme) => {
                   const themeStyles = getThemeStyles(theme);
                   const isSelected = currentTheme === theme;
                   
@@ -1071,12 +1132,10 @@ Compartido desde Biblia Mi Alma PWA`;
                             backgroundColor: 
                               theme === 'light' ? '#ffffff' :
                               theme === 'dark' ? '#1f2937' :
-                              theme === 'sepia' ? '#fef3c7' :
                               '#000000',
                             borderColor:
                               theme === 'light' ? '#d1d5db' :
                               theme === 'dark' ? '#4b5563' :
-                              theme === 'sepia' ? '#f59e0b' :
                               '#ffffff'
                           }}
                         />
@@ -1213,7 +1272,7 @@ Compartido desde Biblia Mi Alma PWA`;
         )}
 
         {/* Botones flotantes de navegación */}
-        <div className="fixed bottom-20 left-4 right-4 z-40 flex justify-between pointer-events-none">
+        <div className="fixed bottom-24 left-4 right-4 z-40 flex justify-between pointer-events-none">
           <Button
             variant="outline"
             size="sm"

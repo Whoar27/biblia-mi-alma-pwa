@@ -281,13 +281,13 @@ export const PageHeader = ({
         {/* Panel de temas */}
         {showThemes && (
           <div className="mt-2 mx-4 p-3 bg-white/10 rounded-lg">
-            {['light', 'dark', 'sepia'].map((theme) => (
+            {['light', 'dark'].map((theme) => (
               <Button
                 key={theme}
                 onClick={() => handleThemeChange(theme)}
                 className={`bg-white text-black hover:bg-gray-100 ${selectedTheme === theme ? 'ring-2 ring-white' : ''}`}
               >
-                {theme === 'light' ? 'Claro' : theme === 'dark' ? 'Oscuro' : 'Sepia'}
+                {theme === 'light' ? 'Claro' : 'Oscuro'}
               </Button>
             ))}
           </div>

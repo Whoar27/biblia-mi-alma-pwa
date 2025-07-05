@@ -16,6 +16,7 @@ import { EnhancedOptionsSection } from "@/components/EnhancedOptionsSection";
 import { DailyVerse } from "@/components/DailyVerse";
 import { useLastRead } from "@/hooks/useLastRead";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { createPortal } from 'react-dom';
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<'index' | 'enhanced-books' | 'enhanced-plans' | 'enhanced-search' | 'enhanced-options' | 'chapter'>('index');
@@ -125,7 +126,6 @@ const Index = () => {
     const themes = {
       light: { background: 'bg-white', text: 'text-gray-900' },
       dark: { background: 'bg-gray-900', text: 'text-white' },
-      sepia: { background: 'bg-amber-50', text: 'text-amber-900' },
     };
     return themes[theme] || themes['light'];
   };
@@ -213,15 +213,44 @@ const Index = () => {
   };
 
   const renderBottomNavigation = () => {
-    const isInBibleSection = currentView === 'chapter' || currentView === 'enhanced-books';
-    let readingBg = getThemeStyles(readingTheme).background;
-    let readingText = getThemeStyles(readingTheme).text;
-    return (
-      <nav className={`fixed bottom-0 left-0 right-0 border-t transition-all duration-300 bg-background border-border`}>
-        <div className="flex justify-around items-center py-2 px-4 max-w-md mx-auto">
+    const theme = localStorage.getItem('theme-global') || 'light';
+    const nav = (
+      <nav
+        className={[
+          'fixed',
+          'bottom-0',
+          'left-0',
+          'right-0',
+          'z-50',
+          'border-t',
+          'transition-all',
+          'duration-300',
+          'bg-background',
+          'border-border',
+        ].join(' ')}
+        style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50 }}
+      >
+        <div className="flex justify-around items-center py-2 px-4 max-w-md mx-auto mb-6">
           {navigationItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentView === item.id;
+            let activeBtnClass = '';
+            let activeTextClass = '';
+            if (isActive) {
+              if (theme === 'light') {
+                activeBtnClass = 'bg-biblical-purple-light';
+                activeTextClass = 'text-biblical-purple';
+              } else if (theme === 'dark') {
+                activeBtnClass = 'bg-gray-800';
+                activeTextClass = 'text-yellow-300';
+              } else {
+                activeBtnClass = '';
+                activeTextClass = 'text-foreground';
+              }
+            } else {
+              activeBtnClass = '';
+              activeTextClass = 'text-foreground';
+            }
             return (
               <Button
                 key={item.id}
@@ -240,24 +269,21 @@ const Index = () => {
                     setCurrentView(item.id as any);
                   }
                 }}
-                className={`flex flex-col items-center gap-1 h-auto py-2 px-3 rounded-2xl transition-all duration-200 ${
-                  isActive 
-                    ? 'text-biblical-purple bg-biblical-purple-light' 
-                    : 'text-foreground'
-                }`}
+                className={`flex flex-col items-center gap-1 h-auto py-2 px-3 rounded-2xl transition-all duration-200 ${activeBtnClass}`}
               >
-                <Icon className={`h-5 w-5 text-foreground`} />
-                <span className={`text-xs font-medium text-foreground`}>{item.label}</span>
+                <Icon className={`h-5 w-5 ${activeTextClass}`} />
+                <span className={`text-xs font-medium ${activeTextClass}`}>{item.label}</span>
               </Button>
             );
           })}
         </div>
       </nav>
     );
+    return createPortal(nav, document.body);
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-28">
       {/* Header específico para la página de inicio */}
       {currentView === 'index' && (
         <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border py-2">
@@ -298,7 +324,7 @@ const Index = () => {
         </header>
       )}
 
-      <main className={`max-w-4xl mx-auto min-h-[calc(100vh-140px)] ${currentView === 'index' ? 'pt-20' : 'pt-4'}`}>
+      <main className={`max-w-4xl mx-auto min-h-[calc(100vh-140px)] ${currentView === 'index' ? 'pt-20' : 'pt-4'} pb-28`}>
         {renderContent()}
       </main>
       {renderBottomNavigation()}

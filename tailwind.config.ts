@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -76,7 +75,9 @@ export default {
 					red: 'hsl(0, 70%, 60%)',
 					'red-light': 'hsl(0, 70%, 95%)',
 					orange: 'hsl(30, 100%, 60%)',
-					'orange-light': 'hsl(30, 100%, 95%)'
+					'orange-light': 'hsl(30, 100%, 95%)',
+					yellow: 'hsl(48, 100%, 50%)',
+					'yellow-light': 'hsl(48, 100%, 95%)',
 				}
 			},
 			borderRadius: {
