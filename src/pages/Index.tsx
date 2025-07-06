@@ -13,13 +13,15 @@ import { FeaturedPlans } from "@/components/FeaturedPlans";
 import { EnhancedPlansSection } from "@/components/EnhancedPlansSection";
 import { EnhancedSearchSection } from "@/components/EnhancedSearchSection";
 import { EnhancedOptionsSection } from "@/components/EnhancedOptionsSection";
+import { SearchResults } from "@/components/SearchResults";
 import { DailyVerse } from "@/components/DailyVerse";
 import { useLastRead } from "@/hooks/useLastRead";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { createPortal } from 'react-dom';
+import { InicioSection } from "@/components/InicioSection";
 
 const Index = () => {
-  const [currentView, setCurrentView] = useState<'index' | 'enhanced-books' | 'enhanced-plans' | 'enhanced-search' | 'enhanced-options' | 'chapter'>('index');
+  const [currentView, setCurrentView] = useState<'index' | 'enhanced-books' | 'enhanced-plans' | 'enhanced-search' | 'enhanced-options' | 'chapter' | 'search-results'>('index');
   const [selectedBook, setSelectedBook] = useState<string>('');
   const [selectedChapter, setSelectedChapter] = useState<number>(1);
   const [currentVerseForExplanation, setCurrentVerseForExplanation] = useState<any>(null);
@@ -28,6 +30,8 @@ const Index = () => {
   const { lastRead, updateLastRead } = useLastRead();
   const [initialTestament, setInitialTestament] = useState<'old' | 'new' | undefined>(undefined);
   const [readingTheme, setReadingTheme] = useState(localStorage.getItem('biblia-chapter-theme') || 'light');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
 
   // Hook para detectar scroll
   useEffect(() => {
@@ -53,6 +57,17 @@ const Index = () => {
     const handler = () => setReadingTheme(localStorage.getItem('biblia-chapter-theme') || 'light');
     window.addEventListener('storage', handler);
     return () => window.removeEventListener('storage', handler);
+  }, []);
+
+  // Hook para escuchar navegación a resultados de búsqueda
+  useEffect(() => {
+    const handleNavigateToSearchResults = (event: CustomEvent) => {
+      setSearchQuery(event.detail.query);
+      setCurrentView('search-results');
+    };
+
+    window.addEventListener('navigateToSearchResults', handleNavigateToSearchResults as EventListener);
+    return () => window.removeEventListener('navigateToSearchResults', handleNavigateToSearchResults as EventListener);
   }, []);
 
   // Mock user profile
@@ -114,6 +129,37 @@ const Index = () => {
     setInitialTestament(undefined); // Limpiar testamento inicial
   };
 
+  const handleNavigateToSearchResults = (query: string) => {
+    setSearchQuery(query);
+    setCurrentView('search-results');
+  };
+
+  const handleBackToSearch = () => {
+    setCurrentView('enhanced-search');
+    setSearchQuery('');
+  };
+
+  const handleSearch = (query: string) => {
+    // Simular resultados de búsqueda
+    const mockResults = [
+      {
+        book: "Juan",
+        chapter: 3,
+        verse: 16,
+        text: "Porque de tal manera amó Dios al mundo, que ha dado a su Hijo unigénito, para que todo aquel que en él cree, no se pierda, mas tenga vida eterna.",
+        category: "salvación"
+      },
+      {
+        book: "Romanos",
+        chapter: 8,
+        verse: 28,
+        text: "Y sabemos que a los que aman a Dios, todas las cosas les ayudan a bien, esto es, a los que conforme a su propósito son llamados.",
+        category: "esperanza"
+      }
+    ];
+    setSearchResults(mockResults);
+  };
+
   const navigationItems = [
     { id: 'index', icon: Home, label: 'Inicio' },
     { id: 'enhanced-books', icon: Book, label: 'Biblia' },
@@ -160,54 +206,28 @@ const Index = () => {
       case 'enhanced-plans':
         return <EnhancedPlansSection />;
       case 'enhanced-search':
-        return <EnhancedSearchSection />;
+        return <EnhancedSearchSection onNavigateToResults={handleNavigateToSearchResults} />;
+      case 'search-results':
+        return (
+          <SearchResults 
+            query={searchQuery}
+            results={searchResults}
+            onSearch={handleSearch}
+            onBackToSearch={handleBackToSearch}
+          />
+        );
       case 'enhanced-options':
         return <EnhancedOptionsSection />;
       case 'index':
       default:
         return (
-          <div className="p-4">
-            <DailyVerse 
-              onExplainVerse={handleExplainVerse}
-              selectedVersion={selectedBibleVersion}
-            />
-            
-            <MyPlans />
-            <FeaturedPlans />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto mt-8">
-              <div 
-                className="bg-gradient-to-br from-biblical-purple-light to-biblical-blue-light p-6 rounded-2xl border shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
-                onClick={() => {
-                  if (lastRead) {
-                    handleChapterSelect(lastRead.book, lastRead.chapter);
-                  } else {
-                    setCurrentView('enhanced-books');
-                  }
-                }}
-              >
-                <Book className="h-12 w-12 mb-3 text-biblical-purple" />
-                <h3 className="font-semibold text-lg mb-2">
-                  {lastRead ? `Continuar: ${lastRead.book} ${lastRead.chapter}` : 'Leer la Biblia'}
-                </h3>
-                <p className="text-muted-foreground text-sm">
-                  {lastRead 
-                    ? 'Continúa donde te quedaste la última vez' 
-                    : 'Explora todos los libros de la Biblia'
-                  }
-                </p>
-              </div>
-              
-              <div 
-                className="bg-gradient-to-br from-biblical-gold-light to-biblical-orange-light p-6 rounded-2xl border shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
-                onClick={() => setCurrentView('enhanced-search')}
-              >
-                <Search className="h-12 w-12 mb-3 text-biblical-orange" />
-                <h3 className="font-semibold text-lg mb-2">Buscar Versículos</h3>
-                <p className="text-muted-foreground text-sm">Encuentra versículos específicos y descubre contenido popular</p>
-              </div>
-            </div>
-          </div>
+          <InicioSection
+            lastRead={lastRead}
+            handleChapterSelect={handleChapterSelect}
+            setCurrentView={setCurrentView}
+            handleExplainVerse={handleExplainVerse}
+            selectedBibleVersion={selectedBibleVersion}
+          />
         );
     }
   };

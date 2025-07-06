@@ -87,15 +87,24 @@ const newTestamentBooks = [
   { name: "Apocalipsis", chapters: 22, abbrev: "Ap", color: "biblical-green" }
 ];
 
-export const EnhancedBooksList = ({ 
-  onBookSelect, 
-  onChapterSelect, 
-  currentBook, 
-  currentChapter, 
+export const EnhancedBooksList = ({
+  onBookSelect,
+  onChapterSelect,
+  currentBook,
+  currentChapter,
   initialTestament
 }: EnhancedBooksListProps) => {
   const [openBooks, setOpenBooks] = useState<Set<string>>(new Set());
   const [activeTestament, setActiveTestament] = useState<'old' | 'new'>(initialTestament || 'old');
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Cambiar al testamento correcto cuando se recibe initialTestament
   useEffect(() => {
@@ -116,7 +125,7 @@ export const EnhancedBooksList = ({
 
   const renderBookCard = (book: typeof oldTestamentBooks[0]) => (
     <Card key={book.name} className="hover:shadow-md transition-shadow">
-      <Collapsible 
+      <Collapsible
         open={openBooks.has(book.name)}
         onOpenChange={() => toggleBook(book.name)}
       >
@@ -132,22 +141,21 @@ export const EnhancedBooksList = ({
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary">{book.chapters} cap.</Badge>
-                <ChevronDown className={`h-4 w-4 transition-transform ${
-                  openBooks.has(book.name) ? 'rotate-180' : ''
-                }`} />
+                <ChevronDown className={`h-4 w-4 transition-transform ${openBooks.has(book.name) ? 'rotate-180' : ''
+                  }`} />
               </div>
             </div>
           </CardHeader>
         </CollapsibleTrigger>
-        
+
         <CollapsibleContent>
           <CardContent>
             <div className="grid grid-cols-5 gap-2 pt-2">
               {/* Capítulo 0 - Introducción */}
               <Button
                 variant={
-                  currentBook === book.name && currentChapter === 0 
-                    ? "default" 
+                  currentBook === book.name && currentChapter === 0
+                    ? "default"
                     : "outline"
                 }
                 size="sm"
@@ -156,14 +164,14 @@ export const EnhancedBooksList = ({
               >
                 <AlertCircle className="h-3 w-3" />
               </Button>
-              
+
               {/* Capítulos regulares */}
               {Array.from({ length: book.chapters }, (_, i) => i + 1).map(chapter => (
                 <Button
                   key={chapter}
                   variant={
-                    currentBook === book.name && currentChapter === chapter 
-                      ? "default" 
+                    currentBook === book.name && currentChapter === chapter
+                      ? "default"
                       : "outline"
                   }
                   size="sm"
@@ -181,36 +189,47 @@ export const EnhancedBooksList = ({
   );
 
   return (
-    <div className="p-4">
-      <div className="mb-4 flex items-center gap-2">
-        <BookOpen className="h-5 w-5 text-biblical-purple" />
-        <h2 className="text-xl font-bold">Libros de la Biblia</h2>
-      </div>
-      
+    <div>
       <Tabs value={activeTestament} onValueChange={(value) => setActiveTestament(value as 'old' | 'new')} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6">
-          {['old', 'new'].map((testament) => (
-            <TabsTrigger
-              key={testament}
-              value={testament}
-              className={testament === 'old' ? 'text-biblical-blue' : 'text-biblical-purple'}
+        {/* Header fijo con título y tabs */}
+        <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border transition-all duration-300 py-2">
+          <div className="max-w-md mx-auto px-4">
+            {/* Título e icono con transición de opacidad y altura */}
+            <div
+              className={`flex items-center gap-3 mb-3 transition-all duration-300 overflow-hidden ${isScrolled ? 'opacity-0 max-h-0' : 'opacity-100 max-h-16'}`}
+              style={{ pointerEvents: isScrolled ? 'none' : 'auto' }}
             >
-              {testament === 'old' ? 'Antiguo Testamento' : 'Nuevo Testamento'}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        
-        <TabsContent value="old">
-          <div className="space-y-3">
-            {oldTestamentBooks.map(renderBookCard)}
+              <BookOpen className="text-biblical-purple h-6 w-6" />
+              <h1 className="font-bold text-xl">Libros de la Biblia</h1>
+            </div>
+            {/* Botones de testamentos */}
+            <TabsList className="grid w-full grid-cols-2 mb-0">
+              {['old', 'new'].map((testament) => (
+                <TabsTrigger
+                  key={testament}
+                  value={testament}
+                  className={testament === 'old' ? 'text-biblical-blue' : 'text-biblical-purple'}
+                >
+                  {testament === 'old' ? 'Antiguo Testamento' : 'Nuevo Testamento'}
+                </TabsTrigger>
+              ))}
+            </TabsList>
           </div>
-        </TabsContent>
-        
-        <TabsContent value="new">
-          <div className="space-y-3">
-            {newTestamentBooks.map(renderBookCard)}
-          </div>
-        </TabsContent>
+        </header>
+
+        {/* Contenido con padding superior para el header fijo */}
+        <div className="pt-20 p-4">
+          <TabsContent value="old">
+            <div className="space-y-3">
+              {oldTestamentBooks.map(renderBookCard)}
+            </div>
+          </TabsContent>
+          <TabsContent value="new">
+            <div className="space-y-3">
+              {newTestamentBooks.map(renderBookCard)}
+            </div>
+          </TabsContent>
+        </div>
       </Tabs>
     </div>
   );

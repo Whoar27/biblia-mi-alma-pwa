@@ -1,195 +1,140 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Search, ChevronRight, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Search, TrendingUp, Clock, Heart } from "lucide-react";
 
-interface SearchRecommendation {
-  id: string;
-  title: string;
-  type: 'verse' | 'topic' | 'plan';
-  content: string;
-  reference?: string;
-  trending?: boolean;
-}
-
-const recommendations: SearchRecommendation[] = [
-  {
-    id: "1",
-    title: "Versículo del día",
-    type: "verse",
-    content: "Porque de tal manera amó Dios al mundo...",
-    reference: "Juan 3:16",
-    trending: true
-  },
-  {
-    id: "2",
-    title: "Esperanza",
-    type: "topic",
-    content: "Versículos sobre esperanza y fe",
-    trending: true
-  },
-  {
-    id: "3",
-    title: "Amor de Dios",
-    type: "topic",
-    content: "Descubre el amor incondicional de Dios"
-  },
-  {
-    id: "4",
-    title: "Oración del Padre Nuestro",
-    type: "verse",
-    content: "Padre nuestro que estás en los cielos...",
-    reference: "Mateo 6:9-13"
-  },
-  {
-    id: "5",
-    title: "Plan de Salmos",
-    type: "plan",
-    content: "31 días de sabiduría y alabanza"
-  }
+const temas = [
+  { nombre: "Amor", color: "bg-blue-500", img: "/placeholder.svg" },
+  { nombre: "Ira", color: "bg-red-500", img: "/placeholder.svg" },
+  { nombre: "Depresión", color: "bg-yellow-700", img: "/placeholder.svg" },
+  { nombre: "Ansiedad", color: "bg-amber-700", img: "/placeholder.svg" },
+  { nombre: "Esperanza", color: "bg-yellow-600", img: "/placeholder.svg" },
+  { nombre: "Paz", color: "bg-blue-700", img: "/placeholder.svg" },
 ];
 
-const trendingSearches = [
-  "Juan 3:16", "Salmo 23", "Filipenses 4:13", "Amor", "Esperanza", "Fe", "Paz", "Sabiduría"
+const filtros = ["Planes", "Iglesias", "Videos", "Imágenes"];
+
+const nuevos = [
+  { id: 1, titulo: "Mateo 5:4", subtitulo: "Proyecto Biblia", duracion: "1:45", img: "/placeholder.svg" },
+  { id: 2, titulo: "Mateo 5:3", subtitulo: "Proyecto Biblia", duracion: "1:56", img: "/placeholder.svg" },
+];
+
+const siguiendo = [
+  { id: 1, titulo: "Plan de Amor", subtitulo: "Plan destacado", img: "/placeholder.svg" },
+  { id: 2, titulo: "Plan de Esperanza", subtitulo: "Plan destacado", img: "/placeholder.svg" },
 ];
 
 export const EnhancedSearchSection = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [recentSearches] = useState<string[]>(["Juan 3:16", "Salmo 23", "Esperanza"]);
+  const [busqueda, setBusqueda] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // Hook para detectar scroll
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleSearch = () => {
-    console.log("Searching for:", searchQuery);
-  };
-
   return (
     <div>
-      {/* Header específico para búsqueda */}
-      <header className={`fixed top-0 left-0 right-0 z-50 bg-background border-b border-border transition-all duration-300 ${
-        isScrolled ? 'py-2' : 'py-4'
-      }`}>
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="flex items-center gap-3 mb-3">
-            <Search className={`text-biblical-orange ${isScrolled ? 'h-5 w-5' : 'h-6 w-6'}`} />
-            <h1 className={`font-bold ${isScrolled ? 'text-lg' : 'text-xl'}`}>
-              Buscar
-            </h1>
+      {/* Header especifico para buscar */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border transition-all duration-300 py-2">
+        <div className="max-w-md mx-auto px-4">
+          {/* Título e icono con transición de opacidad y altura */}
+          <div
+            className={`flex items-center gap-3 mb-3 transition-all duration-300 overflow-hidden ${isScrolled ? 'opacity-0 max-h-0' : 'opacity-100 max-h-16'}`}
+            style={{ pointerEvents: isScrolled ? 'none' : 'auto' }}
+          >
+            <Search className="text-biblical-purple h-6 w-6" />
+            <h1 className="font-bold text-xl">Buscar</h1>
           </div>
-          
-          {/* Barra de búsqueda fija */}
-          <div className="relative">
-            <Input
-              type="text"
-              placeholder="Buscar versículos, temas, planes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={`pl-10 pr-4 ${isScrolled ? 'py-2 text-sm' : 'py-3 text-base'}`}
+          {/* Barra de búsqueda */}
+          <div className="flex items-center bg-gray-100 rounded-full px-4 py-2 mb-2">
+            <Search className="text-gray-400 mr-2" />
+            <input
+              className="bg-transparent outline-none flex-1 text-base"
+              placeholder="Buscar"
+              value={busqueda}
+              onChange={e => setBusqueda(e.target.value)}
             />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Button 
-              onClick={handleSearch}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2"
-              size={isScrolled ? "sm" : "default"}
-            >
-              Buscar
-            </Button>
           </div>
         </div>
       </header>
-
+      
       {/* Contenido con padding superior para el header fijo */}
-      <div className="pt-32 p-4 space-y-6">
-        {/* Búsquedas recientes */}
-        {recentSearches.length > 0 && (
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-medium">Búsquedas recientes</h3>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {recentSearches.map((search, index) => (
-                <Badge
-                  key={index}
-                  variant="secondary"
-                  className="cursor-pointer hover:bg-biblical-purple-light"
-                  onClick={() => setSearchQuery(search)}
-                >
-                  {search}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        )}
+      <div className="pt-24 p-4 pb-24 max-w-md mx-auto">
+        {/* Filtros rápidos */}
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
+          {filtros.map(f => (
+            <Button key={f} variant="outline" className="rounded-full px-4 py-1 whitespace-nowrap font-semibold">
+              {f}
+            </Button>
+          ))}
+        </div>
 
-        {/* Tendencias */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <TrendingUp className="h-4 w-4 text-biblical-orange" />
-            <h3 className="text-sm font-medium">Tendencias</h3>
+        {/* Buscar por tema */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="font-bold text-lg">Buscar por tema</h2>
+            <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1">
+              VER TODOS <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {trendingSearches.map((search, index) => (
-              <Badge
-                key={index}
-                variant="outline"
-                className="cursor-pointer hover:bg-biblical-orange-light border-biblical-orange text-biblical-orange"
-                onClick={() => setSearchQuery(search)}
-              >
-                {search}
-              </Badge>
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {temas.map(t => (
+              <div key={t.nombre} className={`min-w-[110px] h-20 rounded-xl flex flex-col items-center justify-center ${t.color} text-white font-semibold shadow-md relative`}>
+                <img src={t.img} alt={t.nombre} className="absolute left-2 top-2 w-8 h-8 rounded-md object-cover opacity-80" />
+                <span className="z-10 text-base mt-8">{t.nombre}</span>
+              </div>
             ))}
           </div>
         </div>
 
-        {/* Recomendaciones */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Heart className="h-4 w-4 text-biblical-red" />
-            <h3 className="text-lg font-semibold">Recomendaciones para ti</h3>
+        {/* Nuevos */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="font-bold text-lg">Nuevos</h2>
+            <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1">
+              VER TODOS <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
-          <div className="grid gap-3">
-            {recommendations.map((item) => (
-              <Card key={item.id} className="hover:shadow-md transition-shadow cursor-pointer">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-medium text-sm">{item.title}</h4>
-                        {item.trending && (
-                          <Badge variant="secondary" className="text-xs bg-biblical-orange text-white">
-                            <TrendingUp className="h-3 w-3 mr-1" />
-                            Trending
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2">{item.content}</p>
-                      {item.reference && (
-                        <Badge variant="outline" className="text-xs">
-                          {item.reference}
-                        </Badge>
-                      )}
-                    </div>
-                    <Badge
-                      variant={item.type === 'verse' ? 'default' : item.type === 'topic' ? 'secondary' : 'outline'}
-                      className="text-xs"
-                    >
-                      {item.type === 'verse' ? 'Versículo' : item.type === 'topic' ? 'Tema' : 'Plan'}
-                    </Badge>
+          <div className="space-y-4">
+            {nuevos.map(n => (
+              <div key={n.id} className="flex items-center gap-3 bg-gray-100 rounded-xl p-2">
+                <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-300 flex items-center justify-center">
+                  <Play className="absolute left-2 top-2 text-white bg-black/60 rounded-full p-1 w-6 h-6" />
+                  <img src={n.img} alt={n.titulo} className="w-full h-full object-cover rounded-lg" />
+                  <span className="absolute bottom-1 right-1 bg-black/70 text-white text-xs px-2 py-0.5 rounded-full">{n.duracion}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-base truncate">{n.titulo}</div>
+                  <div className="text-xs text-gray-500 flex items-center gap-1">
+                    <span className="inline-block w-2 h-2 bg-blue-400 rounded-full mr-1" />
+                    {n.subtitulo}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Siguiendo */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="font-bold text-lg">Siguiendo</h2>
+            <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1">
+              VER TODOS <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="space-y-4">
+            {siguiendo.map(s => (
+              <div key={s.id} className="flex items-center gap-3 bg-gray-100 rounded-xl p-2">
+                <img src={s.img} alt={s.titulo} className="w-16 h-16 rounded-lg object-cover" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-base truncate">{s.titulo}</div>
+                  <div className="text-xs text-gray-500">{s.subtitulo}</div>
+                </div>
+              </div>
             ))}
           </div>
         </div>

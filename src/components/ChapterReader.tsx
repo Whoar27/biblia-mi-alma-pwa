@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
-import { ChevronLeft, ChevronRight, Search, MoreHorizontal, ArrowLeft, Type, BookOpen, Palette, Share2, MoreVertical } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, MoreHorizontal, ArrowLeft, Type, BookOpen, Palette, Share2, MoreVertical, TrendingUp, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { VerseOptionsPanel } from "./VerseOptionsPanel";
 import {
@@ -305,6 +305,12 @@ export const ThemeContext = createContext<{
 
 export const useTheme = () => useContext(ThemeContext);
 
+const trendingSearches = [
+  "sofonias 3:17",
+  "salmo 91",
+  "sofonías 3:17"
+];
+
 export const ChapterReader = ({ book, chapter, onChapterChange, onBackToBooks, selectedVersion, onNavigateToTestament, onBookChange }: ChapterReaderProps) => {
   // Cargar preferencias guardadas del localStorage
   const getStoredFontSize = () => {
@@ -328,7 +334,7 @@ export const ChapterReader = ({ book, chapter, onChapterChange, onBackToBooks, s
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<{ verse: number; text: string }[]>([]);
-  const [recentSearches] = useState<string[]>(["Dios", "amor", "fe", "esperanza", "paz"]);
+  const [recentSearches, setRecentSearches] = useState<string[]>(["sofonias 3:17", "entonces dijo a sus dicipulos", "digno eres tú"]);
   const [searchRecommendations] = useState<string[]>([
     "salvación", "perdón", "gracia", "misericordia", "sabiduría", 
     "verdad", "vida", "luz", "camino", "justicia"
@@ -631,15 +637,15 @@ Compartido desde Biblia Mi Alma PWA`;
     const searchTerm = query || searchQuery;
     if (!searchTerm.trim()) return;
 
-    // Simular búsqueda en el capítulo actual
+    // Simular búsqueda local en el capítulo
     const mockResults = [
-      { verse: 1, text: `Resultado de búsqueda para "${searchTerm}" en el versículo 1` },
-      { verse: 5, text: `Otro resultado para "${searchTerm}" en el versículo 5` },
-      { verse: 10, text: `Más resultados de "${searchTerm}" en el versículo 10` }
+      { verse: 17, text: 'Pues tu Dios está contigo y con su poder te salvará. Aunque no necesita de palabras para demostrarte que te ama,' },
+      { verse: 1, text: '¡Qué mal te va a ir, Jerusalén! Eres una ciudad desobediente, y maltratas a los demás. ¡Estás llena de pecado!' },
+      { verse: 10, text: 'Entonces la gente que me adora, y que ahora anda en otros países, vendrá a presentarme ofrendas desde el país de' },
+      { verse: 11, text: 'Tú, Jerusalén, has sido muy rebelde; pero no volverás a quedar en vergüenza. Viene el día en que expulsaré de ti a los que se' },
+      { verse: 12, text: 'En tus calles solo habrá gente humilde y sencilla, que pondrá en mí su confianza.' }
     ];
-    
-    setSearchResults(mockResults);
-    showSubtleToast(`Encontrados ${mockResults.length} resultados`);
+    setSearchResults(mockResults.filter(r => r.text.toLowerCase().includes(searchTerm.toLowerCase()) || String(r.verse).includes(searchTerm)));
   };
 
   const renderContent = () => {
@@ -949,7 +955,7 @@ Compartido desde Biblia Mi Alma PWA`;
               </div>
               
               {/* Lado derecho - Búsqueda y opciones */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -1156,107 +1162,128 @@ Compartido desde Biblia Mi Alma PWA`;
         {showSearch && (
           <div className={`fixed inset-0 ${getThemeStyles(currentTheme).background} z-50 flex flex-col`}>
             {/* Header de búsqueda */}
-            <div className={`flex items-center gap-2 p-4 border-b ${getThemeStyles(currentTheme).border}`}>
+            <div className="flex items-center gap-2 p-4 border-b border-border sticky top-0 bg-background z-10">
+              <div className="flex-1 flex items-center gap-2 bg-[#f3f3f3] rounded-full px-3 py-2">
+                <Search className="h-5 w-5 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Buscar"
+                  value={searchQuery}
+                  onChange={e => {
+                    setSearchQuery(e.target.value);
+                    handleSearch(e.target.value);
+                  }}
+                  className="flex-1 bg-transparent outline-none border-none text-base"
+                  autoFocus
+                />
+              </div>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setShowSearch(false)}
-                className="p-1"
+                onClick={() => {
+                  setShowSearch(false);
+                  setSearchQuery("");
+                  setSearchResults([]);
+                }}
+                className="ml-2 text-muted-foreground font-semibold"
               >
-                <ArrowLeft className="h-5 w-5" />
+                Cancelar
               </Button>
-              <div className="flex-1 flex items-center gap-2">
-                <Input
-                  type="text"
-                  placeholder="Buscar en la Biblia..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  className="flex-1"
-                  autoFocus
-                />
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => {
-                    setShowSearch(false);
-                    setSearchQuery("");
-                    setSearchResults([]);
-                  }}
-                  className="px-3"
-                >
-                  Cancelar
-                </Button>
-              </div>
             </div>
 
             {/* Contenido de búsqueda */}
             <div className="flex-1 overflow-y-auto p-4">
               {searchQuery === "" ? (
-                <div className="space-y-6">
-                  {/* Búsquedas recientes */}
+                <div className="space-y-8">
+                  {/* Tendencias */}
                   <div>
-                    <h3 className={`text-lg font-semibold mb-3 ${getThemeStyles(currentTheme).text}`}>Búsquedas recientes</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {recentSearches.map((term) => (
-                        <Button
-                          key={term}
-                          variant="outline"
-                          size="sm"
+                    <div className="flex items-center gap-2 mb-4">
+                      <TrendingUp className="h-5 w-5 text-biblical-orange" />
+                      <h3 className="text-lg font-semibold">Tendencia en Búsquedas</h3>
+                    </div>
+                    <div className="space-y-2">
+                      {trendingSearches.slice(0, 3).map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent cursor-pointer transition-colors"
                           onClick={() => {
-                            setSearchQuery(term);
-                            handleSearch(term);
+                            setSearchQuery(item);
+                            handleSearch(item);
                           }}
-                          className={`text-sm ${getThemeStyles(currentTheme).buttonBorder} ${getThemeStyles(currentTheme).text}`}
                         >
-                          {term}
-                        </Button>
+                          <TrendingUp className="h-5 w-5 text-biblical-orange flex-shrink-0" />
+                          <span className="flex-1 text-left">{item}</span>
+                        </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* Recomendaciones */}
-                  <div>
-                    <h3 className={`text-lg font-semibold mb-3 ${getThemeStyles(currentTheme).text}`}>Recomendaciones</h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      {searchRecommendations.map((term) => (
+                  {/* Búsquedas recientes */}
+                  {recentSearches.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        <Clock className="h-5 w-5 text-muted-foreground" />
+                        <h3 className="text-lg font-semibold flex-1">Búsquedas Recientes</h3>
                         <Button
-                          key={term}
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            setSearchQuery(term);
-                            handleSearch(term);
-                          }}
-                          className={`justify-start text-sm ${getThemeStyles(currentTheme).buttonBorder} ${getThemeStyles(currentTheme).text}`}
+                          className="rounded-full px-4 py-1 text-xs"
+                          onClick={() => setRecentSearches([])}
                         >
-                          {term}
+                          Borrar
                         </Button>
-                      ))}
+                      </div>
+                      <div className="space-y-2">
+                        {recentSearches.map((term, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent cursor-pointer transition-colors"
+                            onClick={() => {
+                              setSearchQuery(term);
+                              handleSearch(term);
+                            }}
+                          >
+                            <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                            <span className="flex-1 text-left">{term}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               ) : (
                 /* Resultados de búsqueda */
                 <div className="space-y-4">
-                  <h3 className={`text-lg font-semibold ${getThemeStyles(currentTheme).text}`}>
-                    Resultados para "{searchQuery}"
-                  </h3>
+                  {/* Slider de filtros */}
+                  <div className="w-full overflow-x-auto pb-2">
+                    <div className="flex gap-2 min-w-max">
+                      {['Todos', 'Biblia', 'Páginas', 'Videos', 'Planes'].map((filtro, idx) => (
+                        <Button
+                          key={filtro}
+                          variant={idx === 0 ? 'default' : 'outline'}
+                          size="sm"
+                          className="rounded-full px-5"
+                          style={{ minWidth: 90 }}
+                        >
+                          {filtro}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <h3 className={`text-lg font-semibold ${getThemeStyles(currentTheme).text}`}>Biblia</h3>
                   {searchResults.length > 0 ? (
                     <div className="space-y-3">
                       {searchResults.map((result, index) => (
                         <div
                           key={index}
-                          className={`p-3 border rounded-lg hover:${getThemeStyles(currentTheme).hover} cursor-pointer ${getThemeStyles(currentTheme).border}`}
+                          className={`p-3 border-l-4 border-black/80 rounded-lg bg-white mb-4`}
                           onClick={() => {
                             // Navegar al versículo
                             setShowSearch(false);
                           }}
                         >
-                          <div className={`font-semibold text-sm text-muted-foreground ${getThemeStyles(currentTheme).text}`}>
-                            {book} {chapter}:{result.verse}
-                          </div>
-                          <div className={`mt-1 ${getThemeStyles(currentTheme).text}`}>{result.text}</div>
+                          <div className="font-bold text-xs mb-1 text-gray-700 uppercase">SOFONÍAS {result.verse}</div>
+                          <div className="text-base text-black leading-snug">{result.text}</div>
                         </div>
                       ))}
                     </div>
